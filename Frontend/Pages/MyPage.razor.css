@@ -1,0 +1,104 @@
+﻿.profile-container {
+    max-width: 450px;
+    margin: 50px auto;
+    background: #fff;
+    border-radius: 15px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+    padding: 25px 30px;
+    font-family: 'Segoe UI', sans-serif;
+}
+
+.profile-container h2 {
+    text-align: center;
+    color: #333;
+    margin-bottom: 25px;
+}
+
+.profile-info {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.profile-info label {
+    font-weight: 600;
+    color: #444;
+}
+
+.profile-info input {
+    padding: 8px;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    font-size: 14px;
+}
+
+.profile-info input:disabled {
+    background: #f2f2f2;
+    color: #888;
+}
+
+.password-field {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.password-field input {
+    flex: 1;
+}
+
+.toggle-btn {
+    background: #eee;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    padding: 6px 10px;
+    cursor: pointer;
+    font-size: 13px;
+}
+
+.toggle-btn:hover {
+    background: #ddd;
+}
+
+.stats {
+    margin-top: 20px;
+    background: #f9fafb;
+    border: 1px solid #e3e3e3;
+    padding: 10px 15px;
+    border-radius: 10px;
+}
+
+.stats p {
+    margin: 6px 0;
+    font-size: 15px;
+}
+
+.save-btn {
+    margin-top: 20px;
+    padding: 10px;
+    background: #4CAF50;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 15px;
+    cursor: pointer;
+}
+
+.save-btn:hover {
+    background: #45a049;
+}
+
+.saved-message {
+    text-align: center;
+    margin-top: 10px;
+    color: #2e7d32;
+    font-weight: 600;
+    animation: fadeInOut 2s;
+}
+
+@keyframes fadeInOut {
+    0% { opacity: 0; }
+    10% { opacity: 1; }
+    90% { opacity: 1; }
+    100% { opacity: 0; }
+}

@@ -1,3 +1,80 @@
 ﻿@page "/MyPage"
+@using Core
+@using Frontend.Service.IService
+@inject IUserService UserService
 
-<PageTitle>My Page</PageTitle>
+<PageTitle>Min Profil</PageTitle>
+
+@if (user == null)
+{
+    <p>Indlæser profil...</p>
+}
+else
+{
+    <div class="profile-container">
+        <h2>Min Profil</h2>
+
+        <div class="profile-info">
+            <label>Brugernavn:</label>
+            <input @bind="user.Name" />
+
+            <label>Email:</label>
+            <input value="@user.Email" disabled />
+
+            <label>Password:</label>
+            <div class="password-field">
+                <input type="@passwordFieldType" @bind="user.Password" />
+                <button type="button" class="toggle-btn" @onclick="TogglePassword">
+                    @(passwordFieldType == "password" ? "Vis" : "Skjul")
+                </button>
+            </div>
+
+            <div class="stats">
+                <p><strong>Antal sessioner:</strong> @sessionCount</p>
+                <p><strong>Samlet antal sushi-stykker:</strong> @totalCount</p>
+            </div>
+
+            <button class="save-btn" @onclick="SaveChanges">Gem ændringer</button>
+
+            @if (savedMessageVisible)
+            {
+                <div class="saved-message">Ændringer gemt!</div>
+            }
+        </div>
+    </div>
+}
+
+@code {
+    private User? user;
+    private int sessionCount = 0;
+    private int totalCount = 0;
+    private string passwordFieldType = "password";
+    private bool savedMessageVisible = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        user = await UserService.GetUserLoggedInAsync();
+        if (user != null)
+        {
+            sessionCount = user.Sessions?.Count ?? 0;
+            totalCount = user.Sessions?
+                .SelectMany(s => s.Participants.Where(p => p.UserId == user.UserId))
+                .Sum(p => p.Count ?? 0) ?? 0;
+        }
+    }
+
+    private void TogglePassword()
+    {
+        passwordFieldType = passwordFieldType == "password" ? "text" : "password";
+    }
+
+    private async Task SaveChanges()
+    {
+        if (user == null) return;
+        await UserService.UpdateUser(user);
+        savedMessageVisible = true;
+        await Task.Delay(2000);
+        savedMessageVisible = false;
+        StateHasChanged();
+    }
+}
