@@ -43,7 +43,11 @@ namespace Frontend.Services
 
             return null;
         }
-        
+
+        public async Task Logout()
+        {
+            await _localStorage.RemoveItemAsync("user");
+        }
         // henter den aktuelt loggede bruger fra local storage
         // return: userobjekt hvis en bruger er logget ind, ellers null
         public async Task<User?> GetUserLoggedInAsync()
@@ -82,10 +86,6 @@ namespace Frontend.Services
         }
 
         // logger brugeren ud ved at fjerne brugerdata fra local storage
-        public async Task Logout()
-        {
-            await _localStorage.RemoveItemAsync("user");
-        }
         
         // henter det højeste bruger-id fra databasen
         // return: største id som int

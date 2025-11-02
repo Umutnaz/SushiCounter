@@ -13,6 +13,7 @@ public class User
     public string Password { get; set; } //Brugerens password, skal
     public DateTime CreatedAt { get; set; } //Hvornår brugeren blev oprettet
     public DateTime UpdatedAt { get; set; } //Hvornår brugeren sidst blev opdateret
+    public List<User> Friends { get; set; } = new(); //Liste over brugerens venner
     public List<Session> Sessions { get; set; } = new(); //Liste over sessioner brugeren har oprettet
     
 }

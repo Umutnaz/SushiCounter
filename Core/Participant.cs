@@ -6,6 +6,8 @@ namespace Core;
 public class Participant
 {
     [BsonRepresentation(BsonType.ObjectId)]
+    public string SessionId { get; set; } = null!;
+    [BsonRepresentation(BsonType.ObjectId)]
     public string UserId { get; set; } = null!;
     public int? Count { get; set; }
     public int? Rating { get; set; } //Rating fra 1-10 (stjerner i frontend)

@@ -11,4 +11,5 @@ public interface IUserService
     Task<User?> GetUserLoggedInAsync();  // Hent den bruger, der er logget ind lige nu
     Task UpdateUser(User user);
     Task DeleteUserAsync(string UserId);
+
 }

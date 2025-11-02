@@ -1,4 +1,9 @@
-﻿@inherits LayoutComponentBase
+﻿@using Core
+@using Frontend.Service.IService
+@inherits LayoutComponentBase
+@inject IUserService UserService
+@inject NavigationManager Nav
+
 <div class="page">
     <div class="sidebar">
         <NavMenu/>
@@ -6,7 +11,10 @@
 
     <main>
         <div class="top-row px-4">
-            <a href="https://learn.microsoft.com/aspnet/core/" target="_blank">About</a>
+            @if (user != null)
+            {
+                <a href="#" @onclick="Logout">Log ud</a>
+            }
         </div>
 
         <article class="content px-4">
@@ -14,3 +22,31 @@
         </article>
     </main>
 </div>
+
+@code {
+    private User? user;
+
+    private async Task Logout()
+    {
+        await UserService.Logout();   // fjerner fra localStorage
+        user = null;                  // opdatér UI med det samme
+        await InvokeAsync(StateHasChanged);
+        Nav.NavigateTo("/", true);    // fuld refresh
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        user = await UserService.GetUserLoggedInAsync();
+    }
+
+    // Kører ved hver parameter/rute-ændring -> fanger login der sker andre steder
+    protected override async Task OnParametersSetAsync()
+    {
+        var current = await UserService.GetUserLoggedInAsync();
+        if ((current?.UserId) != (user?.UserId))
+        {
+            user = current;
+            await InvokeAsync(StateHasChanged);
+        }
+    }
+}

@@ -1,0 +1,259 @@
+﻿@page "/Friends"
+@using Core
+@using Frontend.Service.IService
+@inject IUserService UserService
+@inject IFriendService FriendService
+
+<PageTitle>Venner</PageTitle>
+
+@if (me == null)
+{
+    <p>Indlæser...</p>
+}
+else
+{
+    <div class="friends-grid">
+        <div class="header">
+            <h2>Hej @me.Name</h2>
+            <p class="muted">Styr dine venner, søg nye, og håndtér anmodninger.</p>
+        </div>
+
+        <div class="tabs">
+            <button class='tab @(activeTab == "friends" ? "active" : null)'   @onclick='() => SetTab("friends")'>Venner</button>
+            <button class='tab @(activeTab == "search"  ? "active" : null)'   @onclick='() => SetTab("search")'>Søg</button>
+            <button class='tab @(activeTab == "requests"? "active" : null)'   @onclick='() => SetTab("requests")'>Anmodninger</button>
+        </div>
+
+        <div class="panel">
+            @if (activeTab == "friends")
+            {
+                @if (friends == null)
+                {
+                    <p>Indlæser venner...</p>
+                }
+                else if (friends.Count == 0)
+                {
+                    <p>Du har ingen venner endnu.</p>
+                }
+                else
+                {
+                    <ul class="list">
+                        @foreach (var f in friends.OrderBy(x => x.Name, StringComparer.OrdinalIgnoreCase))
+                        {
+                            <li class="item">
+                                <div>
+                                    <div class="name">@f.Name</div>
+                                    <div class="sub">@f.Email</div>
+                                </div>
+                                <button class="link danger" @onclick="(()=>RemoveFriend(f.UserId!))">Fjern</button>
+                            </li>
+                        }
+                    </ul>
+                }
+            }
+            else if (activeTab == "search")
+            {
+                <div class="search-row">
+                    <input class="search-input" placeholder="Søg brugernavn..." @bind="searchQuery" @bind:event="oninput" />
+                    <button class="btn" @onclick="RunSearch">Søg</button>
+                </div>
+
+                @if (isSearching)
+                {
+                    <p>Søger...</p>
+                }
+                else if (searchResults != null)
+                {
+                    @if (searchResults.Count == 0)
+                    {
+                        <p>Ingen brugere fundet.</p>
+                    }
+                    else
+                    {
+                        <ul class="list">
+                            @foreach (var u in searchResults.OrderBy(u => u.Name, StringComparer.OrdinalIgnoreCase))
+                            {
+                                <li class="item">
+                                    <div>
+                                        <div class="name">@u.Name</div>
+                                        <div class="sub">@u.Email</div>
+                                    </div>
+
+                                    @if (u.UserId == me.UserId)
+                                    {
+                                        <span class="muted">Det er dig</span>
+                                    }
+                                    else if (friends?.Any(x => x.UserId == u.UserId) == true)
+                                    {
+                                        <span class="muted">Allerede ven</span>
+                                    }
+                                    else if (pendingOutgoing?.Contains(u.UserId!) == true)
+                                    {
+                                        <span class="muted">Anmodning sendt</span>
+                                    }
+                                    else
+                                    {
+                                        <button class="link" @onclick="(()=>SendFriendRequest(u.UserId!))">Ansøg om venskab</button>
+                                    }
+                                </li>
+                            }
+                        </ul>
+                    }
+                }
+            }
+            else if (activeTab == "requests")
+            {
+                @if (incomingRequests == null)
+                {
+                    <p>Indlæser anmodninger...</p>
+                }
+                else if (incomingRequests.Count == 0)
+                {
+                    <p>Ingen nye anmodninger.</p>
+                }
+                else
+                {
+                    <ul class="list">
+                        @foreach (var r in incomingRequests)
+                        {
+                            <li class="item">
+                                <div>
+                                    <div class="name">@r.FromUser?.Name</div>
+                                    <div class="sub">@r.FromUser?.Email</div>
+                                </div>
+                                <div class="btns">
+                                    <button class="link" @onclick="(()=>RespondToRequest(r.RequestId!, true))">Godkend</button>
+                                    <button class="link danger" @onclick="(()=>RespondToRequest(r.RequestId!, false))">Afvis</button>
+                                </div>
+                            </li>
+                        }
+                    </ul>
+                }
+            }
+        </div>
+
+        @if (showAlert)
+        {
+            <div class="alert @alertClass">@alertText</div>
+        }
+    </div>
+}
+
+@code {
+    private User? me;
+
+    // UI state
+    private string activeTab = "friends";
+    private bool showAlert = false;
+    private string alertText = "";
+    private string alertClass = "";
+
+    // Venner
+    private List<User>? friends;
+
+    // Søg
+    private string searchQuery = "";
+    private bool isSearching = false;
+    private List<User>? searchResults;
+    private HashSet<string> pendingOutgoing = new(StringComparer.OrdinalIgnoreCase);
+
+    // Anmodninger (Core.FriendRequest)
+    private List<FriendRequest>? incomingRequests;
+
+    protected override async Task OnInitializedAsync()
+    {
+        me = await UserService.GetUserLoggedInAsync();
+        if (me != null)
+        {
+            await LoadFriends();
+            await LoadIncomingRequests();
+            await LoadPendingOutgoing();
+        }
+    }
+
+    private void SetTab(string key)
+    {
+        activeTab = key;
+        if (key == "friends") _ = LoadFriends();
+        if (key == "requests") _ = LoadIncomingRequests();
+    }
+
+    private async Task LoadFriends()
+    {
+        if (me == null) return;
+        friends = await FriendService.GetFriends(me.UserId!);
+        StateHasChanged();
+    }
+
+    private async Task LoadIncomingRequests()
+    {
+        if (me == null) return;
+        incomingRequests = await FriendService.GetIncomingFriendRequests(me.UserId!);
+        StateHasChanged();
+    }
+
+    private async Task LoadPendingOutgoing()
+    {
+        if (me == null) return;
+        var outgoing = await FriendService.GetOutgoingFriendRequests(me.UserId!);
+        pendingOutgoing = new HashSet<string>(outgoing.Select(o => o.ToUserId!), StringComparer.OrdinalIgnoreCase);
+    }
+
+    private async Task RunSearch()
+    {
+        isSearching = true;
+        StateHasChanged();
+
+        if (string.IsNullOrWhiteSpace(searchQuery))
+        {
+            searchResults = new();
+        }
+        else
+        {
+            searchResults = await FriendService.SearchUsersByName(searchQuery.Trim());
+        }
+
+        isSearching = false;
+        StateHasChanged();
+    }
+
+    private async Task SendFriendRequest(string toUserId)
+    {
+        if (me == null || toUserId == me.UserId) return;
+
+        var ok = await FriendService.SendFriendRequest(me.UserId!, toUserId);
+        if (ok) pendingOutgoing.Add(toUserId);
+
+        Toast(ok ? "Anmodning sendt." : "Kunne ikke sende anmodning.", ok);
+        await LoadIncomingRequests();
+    }
+
+    private async Task RespondToRequest(string requestId, bool accept)
+    {
+        var ok = await FriendService.RespondToFriendRequest(requestId, accept);
+        if (ok && accept) await LoadFriends();
+        await LoadIncomingRequests();
+
+        Toast(ok ? (accept ? "Venneanmodning godkendt." : "Venneanmodning afvist.") : "Handling mislykkedes.", ok);
+    }
+
+    private async Task RemoveFriend(string friendId)
+    {
+        if (me == null) return;
+        var ok = await FriendService.RemoveFriend(me.UserId!, friendId);
+        if (ok) await LoadFriends();
+
+        Toast(ok ? "Ven fjernet." : "Kunne ikke fjerne ven.", ok);
+    }
+
+    private async void Toast(string msg, bool ok)
+    {
+        alertText = msg;
+        alertClass = ok ? "ok" : "err";
+        showAlert = true;
+        StateHasChanged();
+        await Task.Delay(1600);
+        showAlert = false;
+        StateHasChanged();
+    }
+}
