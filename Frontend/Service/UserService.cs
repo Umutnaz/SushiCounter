@@ -67,8 +67,18 @@ namespace Frontend.Services
         // param: user, brugerens data som opdateres
         public async Task UpdateUser(User user)
         {
-            user.Password = "placeholder";
-            await _httpClient.PutAsJsonAsync($"{BaseURL}/update", user);
+            if (user == null) throw new ArgumentNullException(nameof(user));
+
+            var response = await _httpClient.PutAsJsonAsync($"{BaseURL}/update", user);
+            if (!response.IsSuccessStatusCode)
+            {
+                var body = await response.Content.ReadAsStringAsync();
+                throw new HttpRequestException($"Update failed: {(int)response.StatusCode} {response.ReasonPhrase}. {body}");
+            }
+
+            // Hent frisk kopi fra backend (så vi får evt. normaliseret email/UpdatedAt m.m.)
+            var fresh = await GetUserByUserId(user.UserId);
+            await _localStorage.SetItemAsync("user", fresh ?? user);
         }
 
         // logger brugeren ud ved at fjerne brugerdata fra local storage

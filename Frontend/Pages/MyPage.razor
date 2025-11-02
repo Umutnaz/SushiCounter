@@ -12,7 +12,7 @@
 else
 {
     <div class="profile-container">
-        <h2>Min Profil</h2>
+        <h2>Hej @user.Name, her din profil</h2>
 
         <div class="profile-info">
             <label>Brugernavn:</label>
@@ -36,9 +36,9 @@ else
 
             <button class="save-btn" @onclick="SaveChanges">Gem ændringer</button>
 
-            @if (savedMessageVisible)
+            @if (showAlert)
             {
-                <div class="saved-message">Ændringer gemt!</div>
+                <div class="alert @alertClass">@alertText</div>
             }
         </div>
     </div>
@@ -49,7 +49,9 @@ else
     private int sessionCount = 0;
     private int totalCount = 0;
     private string passwordFieldType = "password";
-    private bool savedMessageVisible = false;
+    private bool showAlert = false;
+    private string alertText = "";
+    private string alertClass = "";
 
     protected override async Task OnInitializedAsync()
     {
@@ -71,10 +73,23 @@ else
     private async Task SaveChanges()
     {
         if (user == null) return;
-        await UserService.UpdateUser(user);
-        savedMessageVisible = true;
+
+        try
+        {
+            await UserService.UpdateUser(user);
+            alertText = "Ændringer gemt!";
+            alertClass = "ok";
+        }
+        catch
+        {
+            alertText = "Kunne ikke gemme ændringer. Prøv igen.";
+            alertClass = "err";
+        }
+
+        showAlert = true;
+        StateHasChanged(); // vis beskeden med det samme
         await Task.Delay(2000);
-        savedMessageVisible = false;
-        StateHasChanged();
+        showAlert = false;
+        StateHasChanged(); // skjul beskeden igen
     }
 }

@@ -88,17 +88,21 @@
     background: #45a049;
 }
 
-.saved-message {
+.alert {
     text-align: center;
     margin-top: 10px;
-    color: #2e7d32;
     font-weight: 600;
+    border-radius: 8px;
+    padding: 8px 12px;
     animation: fadeInOut 2s;
 }
-
-@keyframes fadeInOut {
-    0% { opacity: 0; }
-    10% { opacity: 1; }
-    90% { opacity: 1; }
-    100% { opacity: 0; }
+.alert.ok {
+    color: #2e7d32;
+    background: #e8f5e9;
+    border: 1px solid #c8e6c9;
+}
+.alert.err {
+    color: #b71c1c;
+    background: #ffebee;
+    border: 1px solid #ffcdd2;
 }
