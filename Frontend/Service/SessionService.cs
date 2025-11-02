@@ -1,8 +1,9 @@
 ﻿using Core;
 using System.Net.Http;
 using System.Net.Http.Json;
+using Frontend.Service.IService;
 
-namespace ComwellWeb.Services
+namespace Frontend.Services
 {
     public class SessionService : Frontend.Service.IService.ISessionService
     {

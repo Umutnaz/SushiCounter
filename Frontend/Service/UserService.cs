@@ -2,14 +2,15 @@
 using Core;
 using System.Net.Http;
 using System.Net.Http.Json;
+using Frontend.Service.IService;
 
-namespace ComwellWeb.Services
+namespace Frontend.Services
 {
     public class UserService : IUserService
     {
         private readonly HttpClient _httpClient;
         private readonly ILocalStorageService _localStorage;
-        private string BaseURL = "http://localhost:5116/api/Users";
+        private string BaseURL = "api/Userss";
 
         public UserService(HttpClient httpClient, ILocalStorageService localStorage)
         {

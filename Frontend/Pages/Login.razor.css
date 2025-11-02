@@ -180,9 +180,9 @@ svg#monkey
     z-index: 4;
     position: absolute;
     border: none;
-    right: calc(var(--p) + (var(--input-px) / 2));
+    right: calc(var(--p) + (var(--input-px) / 47));
     bottom: calc(
-            var(--p) + var(--submit-h) + var(--space-y) + (var(--input-py) / 1) + 3px
+            var(--p) + var(--submit-h) + var(--space-y) + (var(--input-py) / 1) + 352px
     );
     padding: 4px 0;
     width: var(--blind-w);

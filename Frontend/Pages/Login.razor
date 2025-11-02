@@ -1,4 +1,9 @@
-﻿@page "/"
+﻿@inject IUserService UserService
+
+@inject NavigationManager nav
+@page "/"
+@using Core
+@using Frontend.Service.IService
 
 <PageTitle>Login</PageTitle>
 
@@ -17,40 +22,49 @@
     <span class="show">Show</span>
   </label>
 
-  <form class="form">
-    <div class="title">    @(New ? "Opret konto" : "Login")</div>
+  <!-- FORM: erstat din eksisterende <form ...>...</form> med dette -->
+  <form class="form" @onsubmit="HandleSubmit">
+    <div class="title">@((New ? "Opret konto" : "Login"))</div>
+
     @if (New)
     {
-      <label class="label_input" for="email-input">Brugernavn</label>
+      <label class="label_input" for="name-input">Brugernavn</label>
       <input
-        placeholder="Synlige brugernavn"
+        id="name-input"
         class="input"
-        type="email"
-        name="email"
-        id="email-input"
-      />
+        placeholder="Synligt brugernavn"
+        @bind="name" />
     }
-    
+
     <label class="label_input" for="email-input">Email</label>
     <input
+      id="email-input"
       class="input"
       type="email"
-      name="email"
-      id="email-input"
-    />
+      @bind="email" />
 
     <div class="frg_pss">
       <label class="label_input" for="password-input">Password</label>
       <a href="">Forgot password?</a>
     </div>
     <input
+      id="password-input"
       class="input"
       type="text"
-      name="password"
-      id="password-input"
-    />
-    <button class="submit" type="button">Submit</button>
+      @bind="password" />
+
+    @if (!string.IsNullOrWhiteSpace(message))
+    {
+      <div class="msg">@message</div>
+    }
+
+    <button class="submit" type="submit">@((New ? "Opret konto" : "Log ind"))</button>
+
+    <button type="button" class="submit" @onclick="ToggleNew">
+      @(New ? "Har du allerede en konto? Log ind" : "Ny bruger? Opret konto")
+    </button>
   </form>
+
 
   <label for="blind-input" class="avatar">
     <svg
@@ -130,7 +144,108 @@
 
 
 @code {
+ // UI state
   bool New = true;
+  string? message;
 
+  // Bindings
+  string? name;
+  string? email;
+  string? password;
 
+  void ToggleNew()
+  {
+    New = !New;
+    message = null;
+  }
+
+  private async Task HandleSubmit()
+  {
+    message = null;
+    
+    //Interne fejlbeskeder hvis felterne herunder ikke er udfyldt
+    if (New)
+    {
+      if (string.IsNullOrWhiteSpace(name) ||
+          string.IsNullOrWhiteSpace(email) ||
+          string.IsNullOrWhiteSpace(password))
+      {
+        message = "Udfyld venligst alle felter.";
+        return;
+      }
+
+      try
+      {
+        // Send KUN Name, Email, Password til servicen
+        var created = await UserService.AddUserAsync(new User
+        {
+          Name = name!,
+          Email = email!,
+          Password = password!
+        });
+
+        if (created is null)
+        {
+          message = "Kunne ikke oprette bruger (findes måske allerede).";
+          return;
+        }
+
+        // valgfrit: log ind efter oprettelse
+        var logged = await UserService.Login(email!, password!);
+        if (logged is not null)
+          nav.NavigateTo("/MyPage", forceLoad: false);
+        else
+          message = "Bruger oprettet, men automatisk login fejlede.";
+      }
+      catch (Exception ex)
+      {
+        message = $"Fejl ved oprettelse: {ex.Message}";
+      }
+    }
+    else
+    {
+      if (string.IsNullOrWhiteSpace(email) ||
+          string.IsNullOrWhiteSpace(password))
+      {
+        message = "Angiv email og password.";
+        return;
+      }
+
+      try
+      {
+        var user = await UserService.Login(email!, password!);
+
+        if (user is not null)
+        {
+          nav.NavigateTo("/MyPage", forceLoad: false);
+        }
+        else
+        {
+          message = "Forkert email eller password.";
+        }
+        
+      }
+      catch (Exception ex)
+      {
+        message = $"Login-fejl: {ex.Message}";
+      }
+    }
+  }
+/*
+  protected override async Task OnInitializedAsync()
+  {
+    try
+    {
+      var user = await UserService.GetUserLoggedInAsync();
+      if (user is not null)
+      {
+        nav.NavigateTo("/MyPage", forceLoad: false);
+      }
+    }
+    catch
+    {
+      // ignorer – ingen aktiv session
+    }
+  }
+*/
 }

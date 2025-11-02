@@ -7,7 +7,7 @@ public class User
 {
     [BsonId]
     [BsonRepresentation(BsonType.ObjectId)]
-    public string UserId { get; set; } = null!; // MongoDB ObjectId som string
+    public string? UserId { get; set; } // MongoDB ObjectId som string
     public string Name { get; set; } //Brugernavn synligt for alle
     public string Email { get; set; } //Brugerens email, skal være unik
     public string Password { get; set; } //Brugerens password, skal

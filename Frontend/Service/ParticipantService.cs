@@ -3,7 +3,7 @@ using Frontend.Service.IService;
 using System.Net.Http;
 using System.Net.Http.Json;
 
-namespace ComwellWeb.Services
+namespace Frontend.Services
 {
     public class ParticipantService : IParticipantService
     {
