@@ -195,10 +195,20 @@
         else
           message = "Bruger oprettet, men automatisk login fejlede.";
       }
-      catch (Exception ex)
+      catch (HttpRequestException ex)
       {
-        message = $"Fejl ved oprettelse: {ex.Message}";
+        if (ex.Message.Contains("Brugernavn findes allerede", StringComparison.OrdinalIgnoreCase))
+          message = "Brugernavnet er allerede valgt.";
+        else if (ex.Message.Contains("Email findes allerede", StringComparison.OrdinalIgnoreCase))
+          message = "Denne email er allerede registreret.";
+        else
+          message = "Kunne ikke oprette bruger. Prøv igen.";
       }
+      catch (Exception)
+      {
+        message = "Der opstod en fejl under oprettelsen.";
+      }
+
     }
     else
     {

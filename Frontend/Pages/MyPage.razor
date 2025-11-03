@@ -11,7 +11,10 @@ else
 {
     <div class="profile-container">
         <h2>Hej @user.Name, her din profil</h2>
-
+        @if (showAlert)
+        {
+            <div class="alert @alertClass">@alertText</div>
+        }
         <div class="profile-info">
             <label>Brugernavn:</label>
             <input @bind="user.Name" />
@@ -33,12 +36,9 @@ else
             </div>
 
             <button class="save-btn" @onclick="SaveChanges">Gem ændringer</button>
-
-            @if (showAlert)
-            {
-                <div class="alert @alertClass">@alertText</div>
-            }
+            <button type="button" class="btn btn-danger">Slet profil</button>
         </div>
+        
     </div>
 }
 
@@ -82,11 +82,17 @@ else
             alertText = "Ændringer gemt!";
             alertClass = "ok";
         }
-        catch
+        catch (HttpRequestException ex)
         {
-            alertText = "Kunne ikke gemme ændringer. Prøv igen.";
+            alertText = ex.Message; // fx “Brugernavnet er allerede valgt.”
             alertClass = "err";
         }
+        catch
+        {
+            alertText = "Der opstod en fejl under opdateringen.";
+            alertClass = "err";
+        }
+
 
         showAlert = true;
         StateHasChanged(); // vis beskeden med det samme

@@ -61,7 +61,11 @@ namespace Frontend.Services
         {
             var response = await _httpClient.PostAsJsonAsync($"{BaseURL}/opret", user);
             if (!response.IsSuccessStatusCode)
-                return null;
+            {
+                var error = await response.Content.ReadAsStringAsync();
+                throw new HttpRequestException(error);
+            }
+
 
             var createdUser = await response.Content.ReadFromJsonAsync<User>();
             return createdUser;
@@ -76,14 +80,20 @@ namespace Frontend.Services
             var response = await _httpClient.PutAsJsonAsync($"{BaseURL}/update", user);
             if (!response.IsSuccessStatusCode)
             {
-                var body = await response.Content.ReadAsStringAsync();
-                throw new HttpRequestException($"Update failed: {(int)response.StatusCode} {response.ReasonPhrase}. {body}");
+                var error = await response.Content.ReadAsStringAsync();
+
+                // Smid en mere præcis fejl som kan fanges i MyPage.razor
+                if (error.Contains("Brugernavn findes allerede", StringComparison.OrdinalIgnoreCase))
+                    throw new HttpRequestException("Brugernavnet er allerede valgt.");
+                else
+                    throw new HttpRequestException("Kunne ikke gemme ændringer. Prøv igen.");
             }
 
             // Hent frisk kopi fra backend (så vi får evt. normaliseret email/UpdatedAt m.m.)
             var fresh = await GetUserByUserId(user.UserId);
             await _localStorage.SetItemAsync("user", fresh ?? user);
         }
+
 
         // logger brugeren ud ved at fjerne brugerdata fra local storage
         
