@@ -59,9 +59,13 @@ else
         if (user != null)
         {
             sessionCount = user.Sessions?.Count ?? 0;
-            totalCount = user.Sessions?
-                .SelectMany(s => s.Participants.Where(p => p.UserId == user.UserId))
-                .Sum(p => p.Count ?? 0) ?? 0;
+
+            totalCount = user.Sessions == null
+                ? 0
+                : user.Sessions
+                    .SelectMany(s => s.Participants ?? new List<Participant>())
+                    .Where(p => p.UserId == user.UserId)
+                    .Sum(p => p.Count);
         }
     }
 

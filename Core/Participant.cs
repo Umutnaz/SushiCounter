@@ -5,11 +5,11 @@ namespace Core;
 
 public class Participant
 {
-    [BsonRepresentation(BsonType.ObjectId)]
-    public string SessionId { get; set; } = null!;
+
     [BsonRepresentation(BsonType.ObjectId)]
     public string UserId { get; set; } = null!;
-    public int? Count { get; set; }
+
+    public int Count { get; set; } = 0;
     public int? Rating { get; set; } //Rating fra 1-10 (stjerner i frontend)
 }
 
@@ -19,3 +19,6 @@ public class Participant
 // Rating er brugerens vurdering af sessionen fra 1-10 (stjerner i frontend)
 // User er den specifikke bruger der har deltaget i sessionen
 // Session er den specifikke session brugeren har deltaget i
+//    [BsonRepresentation(BsonType.ObjectId)]
+//public string SessionId { get; set; } = null!;
+// den er fjernet dam an ved hvilket session den er tilknyttet til via Sessions modelklasse
