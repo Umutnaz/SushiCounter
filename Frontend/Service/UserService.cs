@@ -10,7 +10,7 @@ namespace Frontend.Services
     {
         private readonly HttpClient _httpClient;
         private readonly ILocalStorageService _localStorage;
-        private string BaseURL = "api/Userss";
+        private string BaseURL = "api/Users";
 
         public UserService(HttpClient httpClient, ILocalStorageService localStorage)
         {

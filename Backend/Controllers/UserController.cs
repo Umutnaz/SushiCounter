@@ -6,21 +6,23 @@ using MongoDB.Driver;
 namespace Backend.Controllers;
 
 [ApiController]
-[Route("api/[controller]s")] // -> "api/Users"
+[Route("api/[controller]")] // -> "api/Users"
 public class UsersController : ControllerBase
 {
     private readonly IMongoCollection<User> _users;
 
     // Skift evt. disse tre værdier til appsettings.json + DI, når du vil rydde op
-    private const string ConnectionString =
-        "mongodb+srv://sushi_app:SushiTest123@cluster0.zndfk.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0";
-    private const string DatabaseName = "SushiCounter";
     private const string UsersCollection = "Users";
 
     public UsersController()
     {
-        var client = new MongoClient(ConnectionString);
-        var db = client.GetDatabase(DatabaseName);
+        var connectionString = Environment.GetEnvironmentVariable("MONGO_CONNECTION_STRING")
+                               ?? throw new InvalidOperationException("MONGO_CONNECTION_STRING is not set.");
+        var databaseName = Environment.GetEnvironmentVariable("MONGO_DATABASE_NAME")
+                           ?? throw new InvalidOperationException("MONGO_DATABASE_NAME is not set.");
+
+        var client = new MongoClient(connectionString);
+        var db = client.GetDatabase(databaseName);
         _users = db.GetCollection<User>(UsersCollection);
 
         // Sørg for unikke indeks på Email og Name

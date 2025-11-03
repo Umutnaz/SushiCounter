@@ -9,7 +9,7 @@ namespace Frontend.Services
     {
         private readonly HttpClient _httpClient;
         // Deltagere ligger under sessions, så vi bruger nested routes:
-        private const string BaseSessionsUrl = "http://localhost:5116/api/Sessions";
+        private const string BaseSessionsUrl = "api/Sessions";
 
         public ParticipantService(HttpClient httpClient)
         {

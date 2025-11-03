@@ -13,16 +13,18 @@ public class FriendsController : ControllerBase
     private readonly IMongoCollection<FriendRequest> _requests;
 
     // Flyt disse til appsettings + DI når du vil rydde op
-    private const string ConnectionString =
-        "mongodb+srv://sushi_app:SushiTest123@cluster0.zndfk.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0";
-    private const string DatabaseName = "SushiCounter";
     private const string UsersCollection = "Users";
     private const string RequestsCollection = "FriendRequests";
 
     public FriendsController()
     {
-        var client = new MongoClient(ConnectionString);
-        var db = client.GetDatabase(DatabaseName);
+        var connectionString = Environment.GetEnvironmentVariable("MONGO_CONNECTION_STRING")
+                               ?? throw new InvalidOperationException("MONGO_CONNECTION_STRING is not set.");
+        var databaseName = Environment.GetEnvironmentVariable("MONGO_DATABASE_NAME")
+                           ?? throw new InvalidOperationException("MONGO_DATABASE_NAME is not set.");
+
+        var client = new MongoClient(connectionString);
+        var db = client.GetDatabase(databaseName);
         _users = db.GetCollection<User>(UsersCollection);
         _requests = db.GetCollection<FriendRequest>(RequestsCollection);
 

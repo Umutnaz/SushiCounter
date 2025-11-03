@@ -4,6 +4,6 @@ namespace Frontend.Service.IService;
 
 public interface IParticipantService
 {
-    Task<bool> AddParticipantAsync(string sessionId, Participant p);   // add/update deltager
-    Task<bool> RemoveParticipantAsync(string sessionId, string userId);   // slet deltager
+    Task<bool> AddParticipantAsync(string sessionId, Participant p);     // add/update deltager (eg. sæt count/rating)
+    Task<bool> RemoveParticipantAsync(string sessionId, string userId);  // fjern deltager
 }
