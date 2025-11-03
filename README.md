@@ -24,7 +24,7 @@ Filen skal placeres inde i **backend**-mappen
 Du skal i din **.env**-fil have følgende indhold:
 
 ```csharp
-MONGO_CONNECTION_STRING=mongodb+srv://<BRUGERNAVN>:<KODE>@<DITCLUSTERNAVN>/?retryWrites=true&w=majority&appName=Cluster0
+MONGO_CONNECTION_STRING=DINCONNECTIONSTRING
 
 MONGO_DATABASE_NAME=DBNAVN
 
@@ -32,9 +32,9 @@ MONGO_DATABASE_NAME=DBNAVN
 ---
 
 ### 🔒 .Env unik?
-*"&lt;BRUGERNAVN&gt;"* skal være navnet på din profil på MongoDB Atlas
-*"&lt;KODE&gt;"* skal være din kode til den profil
-*"&lt;DITCLUSTERNAVN&gt;"* skal være dit cluster-navn
+* *"&lt;DINCONNECTIONSTRING&gt;"* skal du simpelt hen erstatte med din connection string
+* *"&lt;DBNAVN&gt;"* skal erstattes med din databases navn
+* Det skal skrives som det står herop, uden apostrof "" og uden et semikolon ; til slut
 
 ---
 
