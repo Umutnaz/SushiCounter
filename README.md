@@ -29,7 +29,6 @@ private const string ConnectionString =
 
 private const string DatabaseName = "DBNAVN";
 
-### 🧩 .Env indhold?
 ```
 ---
 
