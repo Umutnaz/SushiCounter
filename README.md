@@ -24,10 +24,9 @@ Filen skal placeres inde i **backend**-mappen
 Du skal i din **.env**-fil have følgende indhold:
 
 ```csharp
-private const string ConnectionString =
-    "mongodb+srv://<BRUGERNAVN>:<KODE>@<DITCLUSTERNAVN>/?retryWrites=true&w=majority&appName=Cluster0";
+MONGO_CONNECTION_STRING=mongodb+srv://<BRUGERNAVN>:<KODE>@<DITCLUSTERNAVN>/?retryWrites=true&w=majority&appName=Cluster0
 
-private const string DatabaseName = "DBNAVN";
+MONGO_DATABASE_NAME=DBNAVN
 
 ```
 ---
