@@ -1,6 +1,7 @@
 ﻿@page "/MyPage"
 @inject IUserService UserService
-
+@inject NavigationManager Nav
+@using Frontend.Components
 <PageTitle>Min Profil</PageTitle>
 
 @if (user == null)
@@ -36,11 +37,13 @@ else
             </div>
 
             <button class="save-btn" @onclick="SaveChanges">Gem ændringer</button>
-            <button type="button" class="btn btn-danger">Slet profil</button>
+            <button type="button" @onclick="MoinMoinUser" class="btn btn-danger">Slet profil</button>
         </div>
         
     </div>
 }
+<SletUserModal Visible="@visible" OnCloseRequested="@(() => visible = false)" UserToDelete="@user"/>
+
 
 @code {
     private User? user;
@@ -50,6 +53,7 @@ else
     private bool showAlert = false;
     private string alertText = "";
     private string alertClass = "";
+    private bool visible = false;
 
     protected override async Task OnInitializedAsync()
     {
@@ -70,6 +74,13 @@ else
     private void TogglePassword()
     {
         passwordFieldType = passwordFieldType == "password" ? "text" : "password";
+    }
+
+    private async Task MoinMoinUser()
+    {
+            //Visible bool er om modal skal vises eller ej, sættes derfor til true ved "OpenDeleteModal"
+            visible = true;
+        
     }
 
     private async Task SaveChanges()

@@ -1,0 +1,51 @@
+﻿@using Core
+@inject IUserService UserService
+@inject NavigationManager Nav
+@if (Visible && UserToDelete != null)
+{
+    <div class="modal-backdrop" @onclick="Close">
+        <div class="modal-content" @onclick:stopPropagation>
+            <button class="close-button" @onclick="Close">X</button>
+
+            <h3>Bekræft sletning</h3>
+            <p>
+                <strong>@UserToDelete.Name</strong>Er du sikker på, at du vil slette din profil?
+            </p>
+
+            <div class="modal-buttons">
+                <button class="btn btn-secondary" @onclick="Close">Annullér</button>
+                <button class="btn btn-danger" @onclick="Slet">Slet bruger</button>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    //parameterne herunder er alle i komponentet tagget som "attribut" i account overview.
+    //Dette er da det er følgende herunder som modalet skal arve fra hovedvinduet som er account overview.
+    //Det er også derfor at paramterne kun er kaldt. 
+    [Parameter] public bool Visible { get; set; }
+    [Parameter] public EventCallback OnCloseRequested { get; set; }
+    [Parameter] public User? UserToDelete { get; set; }
+
+
+//laver callback til parameteren, ved close btn.
+//For netop at lave den funktion som close har i accountoverview
+//OnCloseRequested="@(() => visible = false)" 
+//det gør visible til false som er det der lukker siden
+    private Task Close() => OnCloseRequested.InvokeAsync();
+    //laver callback til samme funktion "OnCloseRequested" til hvis man trykker på diven
+    private async void Slet()
+    {
+            Nav.NavigateTo("/", true);
+            //Kører DeleteUserAsync funktionen fra vores Userservice med parametren UserToDelete.UserId
+            //Det er personen man har trykket på som modalet er om
+            await UserService.DeleteUserAsync(UserToDelete.UserId);
+       
+            //callback til OnUserDeleted funktionen fra account overview
+            //Som søger for at personen man nu har slettet også bliver slettet fra listen
+            await OnCloseRequested.InvokeAsync();
+        }
+    }
+
+}

@@ -116,6 +116,7 @@ namespace Frontend.Services
         // param: userId - id på brugeren der skal slettes
         public async Task DeleteUserAsync(string userId)
         {
+            await _localStorage.RemoveItemAsync("user");
             await _httpClient.DeleteAsync($"{BaseURL}/{userId}");
         }
 
