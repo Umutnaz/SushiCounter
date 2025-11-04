@@ -9,5 +9,5 @@ public interface ISessionService
     Task<Session?> GetSessionBySessionIdAsync(string sessionId);
     Task<Session?> AddSessionAsync(string creatorUserId, Session session);
     Task<bool> UpdateSessionAsync(Session session);
-    Task<bool> DeleteSessionAsync(string sessionId);
+    Task<bool> DeleteSessionAsync(string sessionId); // skal man kunne slette en session?
 }
