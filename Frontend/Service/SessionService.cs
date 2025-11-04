@@ -40,14 +40,23 @@ namespace Frontend.Services
         public async Task<Session?> AddSessionAsync(string creatorUserId, Session s)
         {
             if (string.IsNullOrWhiteSpace(creatorUserId) || s is null)
-                return null;
+                throw new ArgumentException("creatorUserId og session er påkrævet.");
 
             var response = await _httpClient.PostAsJsonAsync($"{BaseURL}/opret/{creatorUserId}", s);
-            if (!response.IsSuccessStatusCode)
-                return null;
 
+            if (!response.IsSuccessStatusCode)
+            {
+                var body = await response.Content.ReadAsStringAsync();
+                var code = (int)response.StatusCode;
+                
+                throw new HttpRequestException(
+                    string.IsNullOrWhiteSpace(body)
+                        ? $"Oprettelse fejlede ({code})."
+                        : body);
+            }
             return await response.Content.ReadFromJsonAsync<Session>();
         }
+
 
         public async Task<bool> UpdateSessionAsync(Session s)
         {

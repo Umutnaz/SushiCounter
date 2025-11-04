@@ -6,6 +6,7 @@ namespace Core;
 
 public class Session
 {
+    [BsonId]
     [BsonRepresentation(BsonType.ObjectId)]
     public string? SessionId { get; set; }
     [Required(ErrorMessage = "Du skal tilføje en titel til sessionen.")]

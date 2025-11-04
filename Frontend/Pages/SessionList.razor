@@ -1,12 +1,125 @@
 ﻿@page "/SessionList"
 
-<PageTitle>MySessions</PageTitle>
-<div>
+@inject ISessionService SessionService
+@inject IUserService UserService
+@using Frontend.Components
+
+<PageTitle>Mine sessions</PageTitle>
+
+<div class="sessionlist-header">
+    <h2>Mine sessions</h2>
+    <button class="btn btn-primary" @onclick="OpenCreateModal">Opret</button>
 </div>
 
+@if (loading)
+{
+    <p>Henter sessions…</p>
+}
+else if (currentUser is null)
+{
+    <p>Du skal være logget ind for at se dine sessions.</p>
+}
+else if (mySessions.Count == 0)
+{
+    <div class="empty-state">
+        <p>Du har ingen sessions endnu.</p>
+        <button class="btn btn-primary" @onclick="OpenCreateModal">Opret din første session</button>
+    </div>
+}
+else
+{
+    <div class="sessionlist-grid">
+        @foreach (var s in mySessions)
+        {
+            <div class="session-card" @onclick="() => OpenEditModal(s)">
+                <div class="session-card-top">
+                    <h3>@s.Title</h3>
+                    <span class="badge @(s.IsActive ? "badge-open" : "badge-closed")">
+                        @(s.IsActive ? "Åben" : "Lukket")
+                    </span>
+                </div>
+                @if (!string.IsNullOrWhiteSpace(s.RestaurantName))
+                {
+                    <div class="muted">📍 @s.RestaurantName</div>
+                }
+                @if (!string.IsNullOrWhiteSpace(s.Description))
+                {
+                    <p class="desc">@s.Description</p>
+                }
+                <div class="session-meta">
+                    <span>👥 @((s.Participants?.Count ?? 0)) deltagere</span>
+                    <span>🍣 @s.TotalCount samlet</span>
+                    @if (s.Rating.HasValue)
+                    {
+                        <span>⭐ @s.Rating/10</span>
+                    }
+                </div>
+            </div>
+        }
+    </div>
+}
+
+<CreateSession Visible="@modalVisible"
+               CurrentUserId="@currentUser?.UserId"
+               EditingSession="@editing"
+               OnCloseRequested="@(() => modalVisible = false)"
+               OnSaved="OnSaved" />
 
 @code {
+    private bool loading = true;
+    private User? currentUser;
+    private List<Session> mySessions = new();
+    private bool modalVisible = false;
+    private Session? editing;
 
-    
+    protected override async Task OnInitializedAsync()
+    {
+        currentUser = await UserService.GetUserLoggedInAsync();
+        await LoadSessionsAsync();
+    }
 
+    private async Task LoadSessionsAsync()
+    {
+        loading = true;
+        mySessions.Clear();
+
+        if (currentUser is not null)
+        {
+            mySessions = await SessionService.GetMySessionsAsync(currentUser.UserId!);
+        }
+
+        loading = false;
+        StateHasChanged();
+    }
+
+    private void OpenCreateModal()
+    {
+        editing = null;          // create-mode
+        modalVisible = true;
+    }
+
+    private void OpenEditModal(Session s)
+    {
+        // shallow copy til redigering i modal
+        editing = new Session
+        {
+            SessionId = s.SessionId,
+            Title = s.Title,
+            RestaurantName = s.RestaurantName,
+            Description = s.Description,
+            CreatorId = s.CreatorId,
+            CreatedAt = s.CreatedAt,
+            IsActive = s.IsActive,
+            Participants = s.Participants?.Select(p => new Participant { UserId = p.UserId, Count = p.Count, Rating = p.Rating }).ToList() ?? new(),
+            TotalCount = s.TotalCount,
+            Rating = s.Rating
+        };
+        modalVisible = true;
+    }
+
+    private async Task OnSaved()
+    {
+        modalVisible = false;
+        await LoadSessionsAsync();
+    }
 }
