@@ -10,7 +10,7 @@
     padding: 1.5rem;
     border-radius: .5rem;
     width: 100%;
-    max-width: 560px;
+    max-width: 620px;
     box-shadow: 0 10px 30px rgba(0,0,0,.2);
     position: relative;
     max-height: 90vh; overflow: auto;
@@ -56,9 +56,31 @@ textarea.input { resize: vertical; }
 .self-note { font-size: .9rem; color: #6c757d; margin-bottom: .5rem; }
 .checkbox-row { display: flex; align-items: center; gap: .5rem; padding: .25rem 0; }
 
-.modal-buttons { display: flex; justify-content: flex-end; gap: .6rem; margin-top: 1rem; }
+.readonly-box {
+    padding: .6rem .75rem;
+    background: #f8f9fa;
+    border: 1px solid #e9ecef;
+    border-radius: .35rem;
+    white-space: pre-wrap;
+    min-height: 40px;
+    display: flex; align-items: center;
+}
+
+.readonly-list { margin: .25rem 0 0; padding-left: 1rem; }
+.readonly-list li { margin: .2rem 0; }
+
+.badge { display: inline-block; padding: .1rem .45rem; border-radius: .35rem; font-size: .8rem; }
+.badge-you { background: #e7f1ff; color: #0b5ed7; border: 1px solid #cfe2ff; margin-left: .35rem; }
+
+.owner-actions { margin-top: .6rem; display: flex; gap: .5rem; }
+
+.modal-buttons { display: flex; justify-content: flex-end; gap: .6rem; margin-top: 1rem; flex-wrap: wrap; }
 .btn { border: none; border-radius: .5rem; padding: .55rem .9rem; cursor: pointer; }
 .btn-secondary { background: #e9ecef; color: #212529; }
 .btn-secondary:hover { filter: brightness(0.96); }
 .btn-primary { background: #0d6efd; color: #fff; }
 .btn-primary:hover { filter: brightness(0.95); }
+.btn-danger { background: #dc3545; color: #fff; }
+.btn-danger:hover { filter: brightness(0.95); }
+.btn-danger-outline { background: #fff; color: #dc3545; border: 1px solid #dc3545; }
+.btn-danger-outline:hover { background: #fff5f6; }

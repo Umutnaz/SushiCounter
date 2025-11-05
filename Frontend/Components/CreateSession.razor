@@ -5,81 +5,162 @@
 @if (Visible)
 {
     <div class="modal-backdrop" @onclick="Close">
-        <div class="modal-content" @onclick:stopPropagation>
-            <button class="close-button" @onclick="Close">X</button>
+    <div class="modal-content" @onclick:stopPropagation>
+    <button class="close-button" @onclick="Close">X</button>
+                <h3>
+            @if (!IsEdit) { <text>Opret session</text> }
+            else if (owner) { <text>Rediger session (ejer)</text> }
+            else { <text>Se session</text> }
+        </h3>
 
-            <h3>@(IsEdit ? "Rediger session" : "Opret session")</h3>
+        @if (!string.IsNullOrWhiteSpace(error))
+        {
+            <div class="alert err">@error</div>
+        }
 
-            @if (!string.IsNullOrWhiteSpace(error))
+        <div class="form-grid">
+            <div class="form-row">
+                <label>Titel <span class="req">*</span></label>
+
+                @if (owner || !IsEdit)
+                {
+                    <input class="input" @bind="title" placeholder="Fx Sushi aften hos Atami Herning" />
+                }
+                else
+                {
+                    <div class="readonly-box">@title</div>
+                }
+            </div>
+
+            <div class="form-row">
+                <label>Restaurant</label>
+
+                @if (owner || !IsEdit)
+                {
+                    <input class="input" @bind="restaurant" placeholder="Fx A+ Siam" />
+                }
+                else
+                {
+                    <div class="readonly-box">@(string.IsNullOrWhiteSpace(restaurant) ? "—" : restaurant)</div>
+                }
+            </div>
+
+            <div class="form-row">
+                <label>Beskrivelse</label>
+
+                @if (owner || !IsEdit)
+                {
+                    <textarea class="input" @bind="description" rows="3" placeholder=""></textarea>
+                }
+                else
+                {
+                    <div class="readonly-box">@((string.IsNullOrWhiteSpace(description) ? "—" : description))</div>
+                }
+            </div>
+
+            @if (IsEdit && owner)
             {
-                <div class="alert err">@error</div>
+                <div class="form-row switch-row">
+                    <label>Status</label>
+                    <label class="switch">
+                        <input type="checkbox" @bind="isActive" />
+                        <span class="slider"></span>
+                    </label>
+                    <span class="switch-label">@(isActive ? "Åben" : "Lukket")</span>
+                </div>
             }
 
-            <div class="form-grid">
-                <div class="form-row">
-                    <label>Titel <span class="req">*</span></label>
-                    <input class="input" @bind="title" placeholder="Fx Sushi aften hos Atami Herning" />
-                </div>
+            <div class="form-row">
+                <label>Deltagere</label>
 
-                <div class="form-row">
-                    <label>Restaurant</label>
-                    <input class="input" @bind="restaurant" placeholder="Fx A+ Siam" />
-                </div>
-
-                <div class="form-row">
-                    <label>Beskrivelse</label>
-                    <textarea class="input" @bind="description" rows="3" placeholder=""></textarea>
-                </div>
-
-                @if (IsEdit)
+                @if (owner || !IsEdit)
                 {
-                    <div class="form-row switch-row">
-                        <label>Status</label>
-                        <label class="switch">
-                            <input type="checkbox" @bind="isActive" />
-                            <span class="slider"></span>
-                        </label>
-                        <span class="switch-label">@(isActive ? "Åben" : "Lukket")</span>
-                    </div>
-                }
-
-                <div class="form-row">
-                    <label>Deltagere (venner)</label>
                     <div class="participants-list">
-                        <div class="self-note">Du (ejer) er altid med.</div>
+                        @if (owner)
+                        {
+                            <div class="self-note">Du (ejer) er altid med.</div>
 
-                        @if (friendsLoading)
-                        {
-                            <div class="muted">Henter venner…</div>
-                        }
-                        else if (friends.Count == 0)
-                        {
-                            <div class="muted">Du har ingen venner endnu.</div>
+                            @if (friendsLoading)
+                            {
+                                <div class="muted">Henter venner…</div>
+                            }
+                            else if (friends.Count == 0)
+                            {
+                                <div class="muted">Du har ingen venner endnu.</div>
+                            }
+                            else
+                            {
+                                @foreach (var f in friends)
+                                {
+                                    <label class="checkbox-row">
+                                        <input type="checkbox"
+                                               checked="@IsSelected(f.UserId!)"
+                                               @onchange="(e)=>ToggleSelect(f.UserId!, ((ChangeEventArgs)e).Value)" />
+                                        <span>@f.Name (@f.Email)</span>
+                                    </label>
+                                }
+                            }
+
+                            @if (IsEdit)
+                            {
+                                <div class="owner-actions">
+                                    <button class="btn btn-danger-outline" @onclick="RemoveAllExceptOwner" disabled="@isSaving">Fjern alle (undtagen mig)</button>
+                                </div>
+                            }
                         }
                         else
                         {
-                            @foreach (var f in friends)
+                            <div class="muted">Du kan ikke redigere deltagere som ikke-ejer.</div>
+
+                            @if (EditingSession?.Participants is not null && EditingSession.Participants.Count > 0)
                             {
-                                <label class="checkbox-row">
-                                    <input type="checkbox"
-                                           checked="@IsSelected(f.UserId!)"
-                                           @onchange="(e)=>ToggleSelect(f.UserId!, ((ChangeEventArgs)e).Value)" />
-                                    <span>@f.Name (@f.Email)</span>
-                                </label>
+                                <ul class="readonly-list">
+                                    @foreach (var p in EditingSession.Participants)
+                                    {
+                                        var friend = friends.FirstOrDefault(x => x.UserId == p.UserId);
+                                        <li>
+                                            @((friend is null) ? p.UserId : friend.Name)
+                                            @if (p.UserId == CurrentUserId)
+                                            {
+                                                <span class="badge badge-you">dig</span>
+                                            }
+                                        </li>
+                                    }
+                                </ul>
+                            }
+                            else
+                            {
+                                <div class="muted">Ingen deltagere.</div>
                             }
                         }
                     </div>
-                </div>
-            </div>
-
-            <div class="modal-buttons">
-                <button class="btn btn-secondary" @onclick="Close" disabled="@isSaving">Annullér</button>
-                <button class="btn btn-primary" @onclick="Save">
-                    @(IsEdit ? "Gem ændringer" : "Opret")
-                </button>
+                }
             </div>
         </div>
+
+        <div class="modal-buttons">
+            @if (owner)
+            {
+                @if (IsEdit)
+                {
+                    <button class="btn btn-danger" @onclick="DeleteSession" disabled="@isSaving">Slet session</button>
+                }
+                <button class="btn btn-secondary" @onclick="Close" disabled="@isSaving">Annullér</button>
+                <button class="btn btn-primary" @onclick="Save" disabled="@isSaving">
+                    @(IsEdit ? "Gem ændringer" : "Opret")
+                </button>
+            }
+            else
+            {
+                @if (IsEdit && CanRemoveSelf())
+                {
+                    <button class="btn btn-danger-outline" @onclick="RemoveSelf" disabled="@isSaving">Fjern mig fra session</button>
+                }
+                <button class="btn btn-primary" @onclick="Close" disabled="@isSaving">Luk</button>
+            }
+        </div>
     </div>
+</div>
 }
 
 @code {
@@ -87,8 +168,11 @@
     [Parameter] public EventCallback OnCloseRequested { get; set; }
     [Parameter] public EventCallback OnSaved { get; set; }
     [Parameter] public string? CurrentUserId { get; set; }
+
     [Parameter] public Session? EditingSession { get; set; } // null => create-mode
-    
+
+    private bool owner = false;
+
     private string title = "";
     private string? restaurant;
     private string? description;
@@ -104,6 +188,10 @@
 
     protected override async Task OnParametersSetAsync()
     {
+        owner = IsEdit
+            ? (!string.IsNullOrWhiteSpace(EditingSession!.CreatorId) && EditingSession.CreatorId == CurrentUserId)
+            : true; // ved oprettelse er man altid ejer
+
         // init felter
         if (IsEdit)
         {
@@ -120,7 +208,7 @@
             isActive = true;
         }
 
-        // hent venner
+        // hent venner (bruges både for ejer og ikke-ejer til at vise navne hvor muligt)
         friendsLoading = true;
         friends = new List<User>();
         selected = new Dictionary<string, bool>();
@@ -136,6 +224,7 @@
                 friends = new List<User>();
             }
         }
+
         friendsLoading = false;
 
         // preselect ved edit (ud fra eksisterende Participants)
@@ -170,16 +259,102 @@
 
     private Task Close() => OnCloseRequested.InvokeAsync();
 
+    private bool CanRemoveSelf()
+        => IsEdit && EditingSession!.Participants?.Any(p => p.UserId == CurrentUserId) == true;
+
+    private async Task RemoveSelf()
+    {
+        if (!IsEdit || string.IsNullOrWhiteSpace(CurrentUserId) || EditingSession?.SessionId is null) return;
+
+        isSaving = true;
+        try
+        {
+            await ParticipantService.RemoveParticipantAsync(EditingSession.SessionId!, CurrentUserId!);
+            await OnSaved.InvokeAsync(); // lukker og refresher liste
+        }
+        catch (Exception ex)
+        {
+            error = ex.Message;
+        }
+        finally
+        {
+            isSaving = false;
+        }
+    }
+
+    private async Task RemoveAllExceptOwner()
+    {
+        if (!owner || !IsEdit || EditingSession?.SessionId is null) return;
+
+        isSaving = true;
+        try
+        {
+            var others = EditingSession!.Participants
+                ?.Where(p => p.UserId != CurrentUserId)
+                .Select(p => p.UserId!)
+                .ToList() ?? new();
+
+            foreach (var uid in others)
+            {
+                await ParticipantService.RemoveParticipantAsync(EditingSession.SessionId!, uid);
+            }
+
+            await OnSaved.InvokeAsync();
+        }
+        catch (Exception ex)
+        {
+            error = ex.Message;
+        }
+        finally
+        {
+            isSaving = false;
+        }
+    }
+
+    private async Task DeleteSession()
+    {
+        if (!owner || !IsEdit || EditingSession?.SessionId is null) return;
+
+        isSaving = true;
+        try
+        {
+            var ok = await SessionService.DeleteSessionAsync(EditingSession.SessionId!);
+            if (!ok)
+            {
+                error = "Kunne ikke slette sessionen.";
+                return;
+            }
+
+            await OnSaved.InvokeAsync();
+        }
+        catch (Exception ex)
+        {
+            error = ex.Message;
+        }
+        finally
+        {
+            isSaving = false;
+        }
+    }
+
     private async Task Save()
     {
         error = null;
 
-        // Knappen er altid enabled – valider lokalt og vis klar fejl
+        // ikke-ejer må ikke gemme i edit-mode
+        if (IsEdit && !owner)
+        {
+            error = "Du kan ikke redigere denne session.";
+            return;
+        }
+
+        // valider
         if (string.IsNullOrWhiteSpace(title))
         {
             error = "Du skal tilføje en titel til sessionen.";
             return;
         }
+
         if (string.IsNullOrWhiteSpace(CurrentUserId))
         {
             error = "Du skal være logget ind.";
@@ -192,15 +367,13 @@
         {
             if (!IsEdit)
             {
-                // CREATE
+                // CREATE (du er ejer)
                 var chosenFriendIds = selected.Where(kv => kv.Value).Select(kv => kv.Key).ToList();
 
                 var participants = new List<Participant>();
-                // inkluder udvalgte venner (valgfrit)
                 participants.AddRange(chosenFriendIds.Select(fid =>
                     new Participant { UserId = fid, Count = 0, Rating = null }));
 
-                // inkluder ejer som deltager (altid) – også når man spiser alene
                 if (!participants.Any(p => p.UserId == CurrentUserId))
                 {
                     participants.Add(new Participant { UserId = CurrentUserId!, Count = 0, Rating = null });
@@ -215,19 +388,17 @@
                     IsActive = true
                 };
 
-                // Smider exception med backend-fejl hvis noget går galt
                 await SessionService.AddSessionAsync(CurrentUserId!, creation);
             }
             else
             {
-                // EDIT (meta + on/off) + delta på deltagere
+                // EDIT (kun ejer)
                 var s = EditingSession!;
                 s.Title = title.Trim();
                 s.RestaurantName = string.IsNullOrWhiteSpace(restaurant) ? null : restaurant!.Trim();
                 s.Description = string.IsNullOrWhiteSpace(description) ? null : description!.Trim();
                 s.IsActive = isActive;
 
-                // 1) Opdater meta
                 var ok = await SessionService.UpdateSessionAsync(s);
                 if (!ok)
                 {
@@ -235,9 +406,8 @@
                     return;
                 }
 
-                // 2) Synk deltagere via delta (ParticipantsController)
+                // Synk deltagere (ejer fjernes aldrig)
                 var existing = s.Participants?.Select(p => p.UserId!).ToHashSet() ?? new HashSet<string>();
-                // ejer skal altid være med – udeluk ham fra delta-beregning
                 if (!string.IsNullOrWhiteSpace(CurrentUserId))
                     existing.Add(CurrentUserId!);
 
@@ -245,7 +415,7 @@
 
                 var toAdd = nowSelected.Except(existing).ToList();
                 var toRemove = existing
-                    .Where(id => id != CurrentUserId)      // fjern ikke ejeren
+                    .Where(id => id != CurrentUserId)
                     .Except(nowSelected)
                     .ToList();
 
@@ -265,12 +435,10 @@
                 }
             }
 
-            // done
             await OnSaved.InvokeAsync();
         }
         catch (Exception ex)
         {
-            // Viser præcis fejltekst fra service/backend
             error = ex.Message;
         }
         finally
@@ -278,4 +446,5 @@
             isSaving = false;
         }
     }
+
 }
