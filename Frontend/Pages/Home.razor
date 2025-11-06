@@ -1,28 +1,111 @@
 ﻿@page "/Home"
+@inject IUserService UserService
+@inject ISessionService SessionService
+@inject IFriendService FriendService
 
 <PageTitle>Home</PageTitle>
 
-<div>
-    Seneste session
-</div>
+<div class="home-container">
+    <h1 class="home-title">Velkommen til SushiTracker 🍣</h1>
 
-<div>
-    Session hvor du spiste mest sushi
-</div>
+    @if (loading)
+    {
+        <p class="loading">Indlæser dine data...</p>
+    }
+    else if (currentUser is null)
+    {
+        <p>Du skal være logget ind for at se din forside.</p>
+    }
+    else
+    {
+        <div class="home-card">
+            <h2>Seneste session</h2>
+            <p>@(latestSession?.Title ?? "Ingen sessioner endnu")</p>
+        </div>
 
-<div>
-    Din samlede sushi count
-</div>
+        <div class="home-card">
+            <h2>Session hvor du spiste mest sushi</h2>
+            <p>@(topSession is not null ? $"{topSession.Title} – {topCount} stk." : "Ingen data endnu")</p>
+        </div>
 
-<div>
-    Højst ratede sushi sted
-</div>
-<div>
-    Af dine venner, er det {navn} der har spist flest på én session: {antal} stk.
+        <div class="home-card">
+            <h2>Din samlede sushi count</h2>
+            <p>@totalCount stk.</p>
+        </div>
+
+        <div class="home-card">
+            <h2>Højst ratede sushi sted</h2>
+            <p>@(bestRated is not null ? $"{bestRated.RestaurantName} – {bestRated.Rating}/10" : "Ingen rating endnu")</p>
+        </div>
+
+        <div class="home-card">
+            <h2>Af dine venner har <strong>@(friendTopName ?? "-")</strong> spist flest på én session</h2>
+            <p>@(friendTopCount > 0 ? $"{friendTopCount} stk." : "Ingen data endnu")</p>
+        </div>
+    }
 </div>
 
 @code {
+    private User? currentUser;
+    private bool loading = true;
 
-    
+    private Session? latestSession;
+    private Session? topSession;
+    private int topCount;
+    private int totalCount;
+    private Session? bestRated;
+    private string? friendTopName;
+    private int friendTopCount;
 
+    protected override async Task OnInitializedAsync()
+    {
+        loading = true;
+        currentUser = await UserService.GetUserLoggedInAsync();
+        if (currentUser is not null)
+        {
+            var sessions = await SessionService.GetMySessionsAsync(currentUser.UserId!);
+            if (sessions.Count > 0)
+            {
+                latestSession = sessions.OrderByDescending(s => s.CreatedAt).FirstOrDefault();
+
+                var userCounts = sessions
+                    .Select(s => new
+                    {
+                        Session = s,
+                        Count = s.Participants.FirstOrDefault(p => p.UserId == currentUser.UserId)?.Count ?? 0
+                    })
+                    .ToList();
+
+                var top = userCounts.OrderByDescending(x => x.Count).FirstOrDefault();
+                topSession = top?.Session;
+                topCount = top?.Count ?? 0;
+                totalCount = userCounts.Sum(x => x.Count);
+
+                bestRated = sessions
+                    .Where(s => s.Rating.HasValue && !string.IsNullOrWhiteSpace(s.RestaurantName))
+                    .OrderByDescending(s => s.Rating)
+                    .FirstOrDefault();
+            }
+
+            // Venner: find hvem der har højeste count på én session
+            var friends = await FriendService.GetFriends(currentUser.UserId!);
+            var allSessions = new List<Session>();
+            foreach (var f in friends)
+                allSessions.AddRange(await SessionService.GetMySessionsAsync(f.UserId!));
+
+            var friendTop = allSessions
+                .SelectMany(s => s.Participants
+                    .Where(p => friends.Any(f => f.UserId == p.UserId))
+                    .Select(p => new { p.UserId, p.Count }))
+                .OrderByDescending(x => x.Count)
+                .FirstOrDefault();
+
+            if (friendTop is not null)
+            {
+                friendTopCount = friendTop.Count;
+                friendTopName = friends.FirstOrDefault(f => f.UserId == friendTop.UserId)?.Name;
+            }
+        }
+        loading = false;
+    }
 }
