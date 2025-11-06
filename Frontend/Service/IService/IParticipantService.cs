@@ -8,6 +8,6 @@ public interface IParticipantService
     Task<bool> RemoveParticipantAsync(string sessionId, string userId);  // fjern deltager
 
     Task<int> AddCountToSessionAsync(int currentCount);
-    Task<bool> CommitLocalCountToSessionAsync(string sessionId, string userId);
+    Task<bool> CommitLocalCountToSessionAsync(string sessionId, string userId, int? rating = null);
     Task <int> GetCurrentLocalCountAsync();
 }

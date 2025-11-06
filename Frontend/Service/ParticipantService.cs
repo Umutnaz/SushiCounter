@@ -55,7 +55,7 @@ namespace Frontend.Services
             return 0;
         }
 
-        public async Task<bool> CommitLocalCountToSessionAsync(string sessionId, string userId)
+        public async Task<bool> CommitLocalCountToSessionAsync(string sessionId, string userId, int? rating = null)
         {
             var key = "participantTotalCount";
             var currentKey = "sushiCurrentCount";
@@ -63,21 +63,27 @@ namespace Frontend.Services
             if (string.IsNullOrWhiteSpace(sessionId) || string.IsNullOrWhiteSpace(userId))
                 return false;
 
-            // Læs tælleren fra localStorage (0 hvis ikke sat)
             var count = 0;
             if (await _localStorage.ContainKeyAsync(key))
                 count = await _localStorage.GetItemAsync<int>(key);
 
-            // Skriv/overskriv deltagers Count i den valgte session
-            var payload = new Participant { UserId = userId, Count = Math.Max(0, count), Rating = null };
+            // Send både count og rating (payload samlet)
+            var payload = new Participant
+            {
+                UserId = userId,
+                Count = Math.Max(0, count),
+                Rating = rating is null ? null : Math.Clamp(rating.Value, 1, 10)
+            };
+
             var response = await _httpClient.PutAsJsonAsync($"api/Sessions/{sessionId}/participants", payload);
             if (!response.IsSuccessStatusCode) return false;
 
-            // Nulstil tællere i localStorage efter succes
+            // Ryd op i localStorage (mf vigtigt!!!!)
             if (await _localStorage.ContainKeyAsync(key)) await _localStorage.RemoveItemAsync(key);
             if (await _localStorage.ContainKeyAsync(currentKey)) await _localStorage.RemoveItemAsync(currentKey);
 
             return true;
         }
+
     }
 }

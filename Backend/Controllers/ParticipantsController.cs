@@ -10,8 +10,6 @@ public class ParticipantsController : ControllerBase
 {
     private readonly IMongoCollection<Session> _sessions;
 
-    // Flyt til appsettings + DI når du rydder op
-
     private const string SessionsCollection = "Sessions";
 
     public ParticipantsController()
@@ -25,21 +23,38 @@ public class ParticipantsController : ControllerBase
         var db = client.GetDatabase(databaseName);
         _sessions = db.GetCollection<Session>(SessionsCollection);
     }
+
     // DELETE: api/Sessions/{sessionId}/participants/{userId}
-    // Fjerner en deltager (creator kan fjerne andre; deltager kan fjerne sig selv – auth/policy håndhæves typisk via middleware)
+    // Fjerner en deltager og opdaterer total count og rating
     [HttpDelete("{userId}")]
     public async Task<IActionResult> Remove(string sessionId, string userId)
     {
         if (string.IsNullOrWhiteSpace(sessionId) || string.IsNullOrWhiteSpace(userId))
             return BadRequest("sessionId/userId mangler.");
 
-        var update = Builders<Session>.Update.PullFilter(s => s.Participants, p => p.UserId == userId);
-        var result = await _sessions.UpdateOneAsync(s => s.SessionId == sessionId, update);
+        var s = await _sessions.Find(x => x.SessionId == sessionId).FirstOrDefaultAsync();
+        if (s is null) return NotFound("Session ikke fundet.");
 
-        if (result.MatchedCount == 0) return NotFound("Session ikke fundet.");
-        // Hvis Pull ikke fandt deltageren, ændres ModifiedCount=0 – det er ok at returnere NoContent alligevel.
+        // Fjern deltager
+        s.Participants.RemoveAll(p => p.UserId == userId);
+
+        // Reberegn totals og rating
+        s.TotalCount = s.Participants.Sum(pp => Math.Max(0, pp.Count));
+        var ratings = s.Participants
+            .Where(pp => pp.Rating.HasValue)
+            .Select(pp => pp.Rating!.Value)
+            .ToList();
+
+        s.Rating = ratings.Count == 0
+            ? (int?)null
+            : Math.Clamp((int)Math.Round(ratings.Average(), MidpointRounding.AwayFromZero), 1, 10);
+
+        await _sessions.ReplaceOneAsync(x => x.SessionId == sessionId, s);
         return NoContent();
     }
+
+    // PUT: api/Sessions/{sessionId}/participants
+    // Tilføjer eller opdaterer en deltager, plusser counts og opdaterer rating og total
     [HttpPut]
     public async Task<IActionResult> AddOrUpdate(string sessionId, [FromBody] Participant p)
     {
@@ -66,8 +81,18 @@ public class ParticipantsController : ControllerBase
             existing.Rating = p.Rating is null ? null : Math.Clamp(p.Rating.Value, 1, 10);
         }
 
+        // Reberegn totals og gennemsnitlig rating (kun tal fra 1-10)
+        s.TotalCount = s.Participants.Sum(pp => Math.Max(0, pp.Count));
+        var ratings = s.Participants
+            .Where(pp => pp.Rating.HasValue)
+            .Select(pp => pp.Rating!.Value)
+            .ToList();
+
+        s.Rating = ratings.Count == 0
+            ? (int?)null
+            : Math.Clamp((int)Math.Round(ratings.Average(), MidpointRounding.AwayFromZero), 1, 10);
+
         await _sessions.ReplaceOneAsync(x => x.SessionId == sessionId, s);
         return NoContent();
     }
-
 }

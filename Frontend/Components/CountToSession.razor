@@ -6,17 +6,38 @@
 {
     <div class="modal-backdrop" @onclick="Close">
         <div class="modal-card" @onclick:stopPropagation>
-            <button class="close-button" title="Luk" @onclick="Close">×</button>
+            <button class="close-button" title="Luk" @onclick="Close" type="button">×</button>
 
             <div class="modal-header">
-                <h3>Vælg en åben session</h3>
+                <h3>Vælg en åben session og giv en rating</h3>
             </div>
 
             <div class="modal-body">
                 @if (!string.IsNullOrWhiteSpace(error))
                 {
-                    <div class="alert err">@error</div>
+                    <div class="alert-text">@error</div>
                 }
+
+                <div class="rating-wrap">
+                    <div class="rating-title">Din rating (1–10)</div>
+
+                    <div class="rating" role="img" aria-label="Vælg rating fra 1 til 10">
+                        @for (int i = 10; i >= 1; i--)
+                        {
+                            <input type="radio"
+                                   id="star_@i"
+                                   name="rating10"
+                                   value="@i"
+                                   checked="@(selectedRating == i)"
+                                   @onchange="() => selectedRating = i" />
+                            <label for="star_@i" title="@i stjerner"></label>
+                        }
+                    </div>
+
+                    <div class="rating-hint">
+                        Valgt: @(string.IsNullOrWhiteSpace(selectedSessionName) ? "Ingen" : selectedSessionName)
+                    </div>
+                </div>
 
                 @if (loading)
                 {
@@ -24,7 +45,7 @@
                 }
                 else if (sessions.Count == 0)
                 {
-                    <div class="empty-note center">Du er ikke en del af nogen åbne sessioner.</div>
+                    <div class="muted center">Du er ikke en del af nogen åbne sessioner.</div>
                 }
                 else
                 {
@@ -32,30 +53,20 @@
                         @foreach (var s in sessions)
                         {
                             <li>
-                                <div class="rating">
-                                    <input value="5" name="rating" id="star5" type="radio">
-                                    <label for="star5"></label>
-                                    <input value="4" name="rating" id="star4" type="radio">
-                                    <label for="star4"></label>
-                                    <input value="3" name="rating" id="star3" type="radio">
-                                    <label for="star3"></label>
-                                    <input value="2" name="rating" id="star2" type="radio">
-                                    <label for="star2"></label>
-                                    <input value="1" name="rating" id="star1" type="radio">
-                                    <label for="star1"></label>
-                                </div>
-                                <button class="session-row"
-                                        disabled="@busy"
+                                <button class="session-row @(selectedSessionId == s.SessionId ? "selected" : "")"
                                         title="Vælg denne session"
+                                        type="button"
                                         @onclick="() => SelectSession(s.SessionId!)">
                                     <div class="row-top">
                                         <span class="title">@s.Title</span>
-                                        <span class="badge badge-open">Åben</span>
+                                        <span class="status-pill">Åben</span>
                                     </div>
+
                                     @if (!string.IsNullOrWhiteSpace(s.RestaurantName))
                                     {
                                         <div class="sub muted">📍 @s.RestaurantName</div>
                                     }
+
                                     <div class="meta">
                                         <span>👥 @((s.Participants?.Count ?? 0))</span>
                                         <span>🍣 @s.TotalCount</span>
@@ -66,11 +77,13 @@
                     </ul>
                 }
             </div>
+
             <div class="modal-footer">
-                <button class="btn btn-primary">Tilføj</button>
-            </div>
-            <div class="modal-footer">
-                <button class="btn btn-secondary" @onclick="Close" disabled="@busy">Annullér</button>
+                <!-- ALTID klikbar; validering sker i AddToSession() -->
+                <button class="btn btn-primary" type="button" @onclick="AddToSession">
+                    Tilføj
+                </button>
+                <button class="btn btn-secondary" type="button" @onclick="Close">Annullér</button>
             </div>
         </div>
     </div>
@@ -83,9 +96,11 @@
     [Parameter] public string? CurrentUserId { get; set; }
 
     private bool loading = true;
-    private bool busy = false;
     private string? error;
     private List<Session> sessions = new();
+    private string? selectedSessionId;
+    private string? selectedSessionName;
+    private int selectedRating = 0; // 0 = ingen rating valgt
 
     protected override async Task OnParametersSetAsync()
     {
@@ -94,6 +109,8 @@
         loading = true;
         error = null;
         sessions.Clear();
+        selectedSessionId = null;
+        selectedSessionName = null;
 
         try
         {
@@ -123,24 +140,40 @@
         }
     }
 
-    private async Task SelectSession(string sessionId)
+    private void SelectSession(string sessionId)
     {
+        selectedSessionId = sessionId;
+        selectedSessionName = sessions.FirstOrDefault(x => x.SessionId == sessionId)?.Title;
+    }
+
+    private async Task AddToSession()
+    {
+        // Kræv kun valgt session (rating valgfri)
+        if (string.IsNullOrWhiteSpace(selectedSessionId))
+        {
+            error = "Vælg en session først.";
+            return;
+        }
+
         if (string.IsNullOrWhiteSpace(CurrentUserId))
         {
             var u = await UserService.GetUserLoggedInAsync();
             CurrentUserId = u?.UserId;
         }
-        if (string.IsNullOrWhiteSpace(sessionId) || string.IsNullOrWhiteSpace(CurrentUserId)) return;
-
-        busy = true;
-        error = null;
+        if (string.IsNullOrWhiteSpace(CurrentUserId))
+        {
+            error = "Du skal være logget ind.";
+            return;
+        }
 
         try
         {
-            var ok = await ParticipantService.CommitLocalCountToSessionAsync(sessionId, CurrentUserId!);
+            var ok = await ParticipantService.CommitLocalCountToSessionAsync(
+                selectedSessionId!, CurrentUserId!, selectedRating == 0 ? (int?)null : selectedRating);
+
             if (!ok)
             {
-                error = "Kunne ikke tilføje din count til sessionen.";
+                error = "Kunne ikke tilføje dine data til sessionen.";
                 return;
             }
 
@@ -152,10 +185,6 @@
         catch (Exception ex)
         {
             error = ex.Message;
-        }
-        finally
-        {
-            busy = false;
         }
     }
 

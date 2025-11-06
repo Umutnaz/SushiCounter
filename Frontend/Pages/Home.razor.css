@@ -12,6 +12,7 @@
     color: #212529;
     margin-bottom: 2rem;
     font-size: 2rem;
+    font-weight: 700;
 }
 
 .loading {
@@ -36,7 +37,7 @@
 
 .home-card h2 {
     margin-bottom: 0.5rem;
-    font-size: 1.2rem;
+    font-size: 1.25rem;
     color: #0c63e4;
 }
 
@@ -44,4 +45,8 @@
     margin: 0;
     font-size: 1rem;
     color: #343a40;
+}
+
+.home-card strong {
+    color: #0a58ca;
 }

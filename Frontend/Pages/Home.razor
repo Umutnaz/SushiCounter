@@ -61,13 +61,17 @@
     {
         loading = true;
         currentUser = await UserService.GetUserLoggedInAsync();
+
         if (currentUser is not null)
         {
+            // Hent alle sessioner hvor brugeren deltager
             var sessions = await SessionService.GetMySessionsAsync(currentUser.UserId!);
             if (sessions.Count > 0)
             {
+                // Seneste session
                 latestSession = sessions.OrderByDescending(s => s.CreatedAt).FirstOrDefault();
 
+                // Find antal stykker brugeren har spist i hver session
                 var userCounts = sessions
                     .Select(s => new
                     {
@@ -76,18 +80,22 @@
                     })
                     .ToList();
 
+                // Find session hvor brugeren spiste mest
                 var top = userCounts.OrderByDescending(x => x.Count).FirstOrDefault();
                 topSession = top?.Session;
                 topCount = top?.Count ?? 0;
+
+                // Samlet antal sushi for brugeren
                 totalCount = userCounts.Sum(x => x.Count);
 
+                // Højst ratede sushi sted (gennemsnit i backend)
                 bestRated = sessions
                     .Where(s => s.Rating.HasValue && !string.IsNullOrWhiteSpace(s.RestaurantName))
                     .OrderByDescending(s => s.Rating)
                     .FirstOrDefault();
             }
 
-            // Venner: find hvem der har højeste count på én session
+            // Venner: find hvem der har spist flest på én session
             var friends = await FriendService.GetFriends(currentUser.UserId!);
             var allSessions = new List<Session>();
             foreach (var f in friends)
@@ -106,6 +114,7 @@
                 friendTopName = friends.FirstOrDefault(f => f.UserId == friendTop.UserId)?.Name;
             }
         }
+
         loading = false;
     }
 }
