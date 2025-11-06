@@ -25,9 +25,22 @@ public class ParticipantsController : ControllerBase
         var db = client.GetDatabase(databaseName);
         _sessions = db.GetCollection<Session>(SessionsCollection);
     }
+    // DELETE: api/Sessions/{sessionId}/participants/{userId}
+    // Fjerner en deltager (creator kan fjerne andre; deltager kan fjerne sig selv – auth/policy håndhæves typisk via middleware)
+    [HttpDelete("{userId}")]
+    public async Task<IActionResult> Remove(string sessionId, string userId)
+    {
+        if (string.IsNullOrWhiteSpace(sessionId) || string.IsNullOrWhiteSpace(userId))
+            return BadRequest("sessionId/userId mangler.");
 
-    // PUT: api/Sessions/{sessionId}/participants
-    // Add/Update deltager. Tilladt kun hvis session er aktiv.
+        var update = Builders<Session>.Update.PullFilter(s => s.Participants, p => p.UserId == userId);
+        var result = await _sessions.UpdateOneAsync(s => s.SessionId == sessionId, update);
+
+        if (result.MatchedCount == 0) return NotFound("Session ikke fundet.");
+        // Hvis Pull ikke fandt deltageren, ændres ModifiedCount=0 – det er ok at returnere NoContent alligevel.
+        return NoContent();
+    }
+    // ParticipantsController.cs – funktionen der modtager count og upserter deltageren
     [HttpPut]
     public async Task<IActionResult> AddOrUpdate(string sessionId, [FromBody] Participant p)
     {
@@ -38,7 +51,6 @@ public class ParticipantsController : ControllerBase
         if (s is null) return NotFound("Session ikke fundet.");
         if (!s.IsActive) return Conflict("Session er lukket.");
 
-        // Upsert i memory (simpelt og læsbart), derefter ReplaceOne
         var existing = s.Participants.FirstOrDefault(x => x.UserId == p.UserId);
         if (existing is null)
         {
@@ -59,19 +71,4 @@ public class ParticipantsController : ControllerBase
         return NoContent();
     }
 
-    // DELETE: api/Sessions/{sessionId}/participants/{userId}
-    // Fjerner en deltager (creator kan fjerne andre; deltager kan fjerne sig selv – auth/policy håndhæves typisk via middleware)
-    [HttpDelete("{userId}")]
-    public async Task<IActionResult> Remove(string sessionId, string userId)
-    {
-        if (string.IsNullOrWhiteSpace(sessionId) || string.IsNullOrWhiteSpace(userId))
-            return BadRequest("sessionId/userId mangler.");
-
-        var update = Builders<Session>.Update.PullFilter(s => s.Participants, p => p.UserId == userId);
-        var result = await _sessions.UpdateOneAsync(s => s.SessionId == sessionId, update);
-
-        if (result.MatchedCount == 0) return NotFound("Session ikke fundet.");
-        // Hvis Pull ikke fandt deltageren, ændres ModifiedCount=0 – det er ok at returnere NoContent alligevel.
-        return NoContent();
-    }
 }

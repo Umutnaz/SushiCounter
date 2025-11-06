@@ -1,0 +1,149 @@
+@inject ISessionService SessionService
+@inject IParticipantService ParticipantService
+@inject IUserService UserService
+
+@if (Visible)
+{
+    <div class="modal-backdrop" @onclick="Close">
+        <div class="modal-card" @onclick:stopPropagation>
+            <button class="close-button" title="Luk" @onclick="Close">×</button>
+
+            <div class="modal-header">
+                <h3>Vælg en åben session</h3>
+            </div>
+
+            <div class="modal-body">
+                @if (!string.IsNullOrWhiteSpace(error))
+                {
+                    <div class="alert err">@error</div>
+                }
+
+                @if (loading)
+                {
+                    <div class="muted center">Henter dine åbne sessioner…</div>
+                }
+                else if (sessions.Count == 0)
+                {
+                    <div class="empty-note center">Du er ikke en del af nogen åbne sessioner.</div>
+                }
+                else
+                {
+                    <ul class="session-list">
+                        @foreach (var s in sessions)
+                        {
+                            <li>
+                                <button class="session-row"
+                                        disabled="@busy"
+                                        title="Vælg denne session"
+                                        @onclick="() => SelectSession(s.SessionId!)">
+                                    <div class="row-top">
+                                        <span class="title">@s.Title</span>
+                                        <span class="badge badge-open">Åben</span>
+                                    </div>
+                                    @if (!string.IsNullOrWhiteSpace(s.RestaurantName))
+                                    {
+                                        <div class="sub muted">📍 @s.RestaurantName</div>
+                                    }
+                                    <div class="meta">
+                                        <span>👥 @((s.Participants?.Count ?? 0))</span>
+                                        <span>🍣 @s.TotalCount</span>
+                                    </div>
+                                </button>
+                            </li>
+                        }
+                    </ul>
+                }
+            </div>
+
+            <div class="modal-footer">
+                <button class="btn btn-secondary" @onclick="Close" disabled="@busy">Annullér</button>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter] public bool Visible { get; set; }
+    [Parameter] public EventCallback OnClose { get; set; }
+    [Parameter] public EventCallback OnCommitted { get; set; }
+    [Parameter] public string? CurrentUserId { get; set; }
+
+    private bool loading = true;
+    private bool busy = false;
+    private string? error;
+    private List<Session> sessions = new();
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (!Visible) return;
+
+        loading = true;
+        error = null;
+        sessions.Clear();
+
+        try
+        {
+            var uid = CurrentUserId;
+            if (string.IsNullOrWhiteSpace(uid))
+            {
+                var u = await UserService.GetUserLoggedInAsync();
+                uid = u?.UserId;
+            }
+
+            if (string.IsNullOrWhiteSpace(uid))
+            {
+                error = "Du skal være logget ind.";
+            }
+            else
+            {
+                sessions = await SessionService.GetMyOpenSessionsAsync(uid!);
+            }
+        }
+        catch (Exception ex)
+        {
+            error = ex.Message;
+        }
+        finally
+        {
+            loading = false;
+        }
+    }
+
+    private async Task SelectSession(string sessionId)
+    {
+        if (string.IsNullOrWhiteSpace(CurrentUserId))
+        {
+            var u = await UserService.GetUserLoggedInAsync();
+            CurrentUserId = u?.UserId;
+        }
+        if (string.IsNullOrWhiteSpace(sessionId) || string.IsNullOrWhiteSpace(CurrentUserId)) return;
+
+        busy = true;
+        error = null;
+
+        try
+        {
+            var ok = await ParticipantService.CommitLocalCountToSessionAsync(sessionId, CurrentUserId!);
+            if (!ok)
+            {
+                error = "Kunne ikke tilføje din count til sessionen.";
+                return;
+            }
+
+            if (OnCommitted.HasDelegate)
+                await OnCommitted.InvokeAsync();
+
+            await Close();
+        }
+        catch (Exception ex)
+        {
+            error = ex.Message;
+        }
+        finally
+        {
+            busy = false;
+        }
+    }
+
+    private Task Close() => OnClose.InvokeAsync();
+}

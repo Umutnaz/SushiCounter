@@ -1,19 +1,59 @@
 ﻿@page "/SushiCounter"
+@inject IParticipantService ParticipantService
+@inject IUserService UserService
+
 
 <PageTitle>Counter</PageTitle>
 
-<h1>Counter</h1>
+<div class="counter-wrap">
+    <h1>Counter</h1>
 
-<p role="status">Current count: @currentCount</p>
+    <p class="status" role="status">Current count: <span class="count">@currentCount</span></p>
 
-<button class="btn btn-primary" @onclick="IncrementCount">Click me</button>
+    <div class="btn-row">
+        <button class="btn btn-primary" @onclick="IncrementCount">Click me</button>
+        <button class="btn btn-secondary" @onclick="AddToSession">Tilføj din count til en session</button>
+    </div>
+    
+</div>
+<CountToSession Visible="@modalVisible"
+                    CurrentUserId="@currentUserId"
+                    OnClose="@(() => modalVisible = false)"
+                    OnCommitted="@OnCommitted" />
 
 @code {
-    private int currentCount = 0;
+    private bool modalVisible = false;
+    private string? currentUserId;
+    int currentCount = 0;
 
-    private void IncrementCount()
+    protected override async Task OnInitializedAsync()
     {
-        currentCount++;
+        var u = await UserService.GetUserLoggedInAsync();
+        currentUserId = u?.UserId;
+
+        // Hent eksisterende værdi fra localStorage via servicen
+        currentCount = await ParticipantService.GetCurrentLocalCountAsync();
     }
 
+    private async Task IncrementCount()
+    {
+        // Gemmer +1 i localStorage via servicen og opdaterer UI med den nye total
+        currentCount = await ParticipantService.AddCountToSessionAsync(1);
+    }
+
+    private Task AddToSession()
+    {
+        // Åbn modal – selve commit/reset sker i modal/servicen
+        modalVisible = true;
+        return Task.CompletedTask;
+    }
+
+    private Task OnCommitted()
+    {
+        // UI reset efter at service har nulstillet storage
+        currentCount = 0;
+        modalVisible = false;
+        StateHasChanged();
+        return Task.CompletedTask;
+    }
 }
