@@ -40,7 +40,6 @@ public class ParticipantsController : ControllerBase
         // Hvis Pull ikke fandt deltageren, ændres ModifiedCount=0 – det er ok at returnere NoContent alligevel.
         return NoContent();
     }
-    // ParticipantsController.cs – funktionen der modtager count og upserter deltageren
     [HttpPut]
     public async Task<IActionResult> AddOrUpdate(string sessionId, [FromBody] Participant p)
     {
@@ -63,7 +62,7 @@ public class ParticipantsController : ControllerBase
         }
         else
         {
-            existing.Count = Math.Max(0, p.Count);
+            existing.Count = Math.Max(0, existing.Count + p.Count);
             existing.Rating = p.Rating is null ? null : Math.Clamp(p.Rating.Value, 1, 10);
         }
 
