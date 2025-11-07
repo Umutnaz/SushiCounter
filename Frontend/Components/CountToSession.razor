@@ -18,19 +18,21 @@
                     <div class="alert-text">@error</div>
                 }
 
+                <!-- Rating (1–10) -->
                 <div class="rating-wrap">
                     <div class="rating-title">Din rating (1–10)</div>
 
-                    <div class="rating" role="img" aria-label="Vælg rating fra 1 til 10">
+                    <div class="rating" role="radiogroup" aria-label="Vælg rating fra 1 til 10">
                         @for (int i = 10; i >= 1; i--)
                         {
+                            var id = $"star_{i}";
                             <input type="radio"
-                                   id="star_@i"
+                                   id="@id"
                                    name="rating10"
                                    value="@i"
                                    checked="@(selectedRating == i)"
-                                   @onchange="() => selectedRating = i" />
-                            <label for="star_@i" title="@i stjerner"></label>
+                                   @onchange="() => OnRatingChanged(i)" />
+                            <label for="@id" title="@($"{i} stjerner")"></label>
                         }
                     </div>
 
@@ -54,19 +56,17 @@
                         {
                             <li>
                                 <button class="session-row @(selectedSessionId == s.SessionId ? "selected" : "")"
-                                        title="Vælg denne session"
                                         type="button"
-                                        @onclick="() => SelectSession(s.SessionId!)">
+                                        title="Vælg denne session"
+                                        @onclick="() => SelectSession(s.SessionId!, s.Title)">
                                     <div class="row-top">
                                         <span class="title">@s.Title</span>
                                         <span class="status-pill">Åben</span>
                                     </div>
-
                                     @if (!string.IsNullOrWhiteSpace(s.RestaurantName))
                                     {
                                         <div class="sub muted">📍 @s.RestaurantName</div>
                                     }
-
                                     <div class="meta">
                                         <span>👥 @((s.Participants?.Count ?? 0))</span>
                                         <span>🍣 @s.TotalCount</span>
@@ -79,7 +79,6 @@
             </div>
 
             <div class="modal-footer">
-                <!-- ALTID klikbar; validering sker i AddToSession() -->
                 <button class="btn btn-primary" type="button" @onclick="AddToSession">
                     Tilføj
                 </button>
@@ -100,7 +99,7 @@
     private List<Session> sessions = new();
     private string? selectedSessionId;
     private string? selectedSessionName;
-    private int selectedRating = 0; // 0 = ingen rating valgt
+    private int selectedRating = 0; // 0 = ingen (rating er valgfri)
 
     protected override async Task OnParametersSetAsync()
     {
@@ -111,6 +110,7 @@
         sessions.Clear();
         selectedSessionId = null;
         selectedSessionName = null;
+        selectedRating = 0;
 
         try
         {
@@ -140,15 +140,19 @@
         }
     }
 
-    private void SelectSession(string sessionId)
+    private void SelectSession(string sessionId, string title)
     {
         selectedSessionId = sessionId;
-        selectedSessionName = sessions.FirstOrDefault(x => x.SessionId == sessionId)?.Title;
+        selectedSessionName = title;
+    }
+
+    private void OnRatingChanged(int value)
+    {
+        selectedRating = value;
     }
 
     private async Task AddToSession()
     {
-        // Kræv kun valgt session (rating valgfri)
         if (string.IsNullOrWhiteSpace(selectedSessionId))
         {
             error = "Vælg en session først.";
@@ -168,8 +172,11 @@
 
         try
         {
+            // rating er valgfri (0 => null)
+            int? ratingToSend = selectedRating == 0 ? (int?)null : selectedRating;
+
             var ok = await ParticipantService.CommitLocalCountToSessionAsync(
-                selectedSessionId!, CurrentUserId!, selectedRating == 0 ? (int?)null : selectedRating);
+                selectedSessionId!, CurrentUserId!, ratingToSend);
 
             if (!ok)
             {

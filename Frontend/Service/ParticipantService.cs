@@ -9,7 +9,13 @@ namespace Frontend.Services
     {
         private readonly HttpClient _httpClient;
         private readonly ILocalStorageService _localStorage;
-        private string BaseURL = "api/Users";
+
+        // API base til participants ligger under Sessions-controlleren
+        private const string BaseSessionsUrl = "api/Sessions";
+
+        // Nøgler i localStorage
+        private const string TotalKey = "participantTotalCount";
+        private const string CurrentKey = "sushiCurrentCount"; // (ryd op efter commit, hvis brugt andre steder)
 
         public ParticipantService(HttpClient httpClient, ILocalStorageService localStorage)
         {
@@ -22,7 +28,7 @@ namespace Frontend.Services
             if (string.IsNullOrWhiteSpace(sessionId) || p is null || string.IsNullOrWhiteSpace(p.UserId))
                 return false;
 
-            var response = await _httpClient.PutAsJsonAsync($"{BaseURL}/{sessionId}/participants", p);
+            var response = await _httpClient.PutAsJsonAsync($"{BaseSessionsUrl}/{sessionId}/participants", p);
             return response.IsSuccessStatusCode;
         }
 
@@ -31,43 +37,51 @@ namespace Frontend.Services
             if (string.IsNullOrWhiteSpace(sessionId) || string.IsNullOrWhiteSpace(userId))
                 return false;
 
-            var response = await _httpClient.DeleteAsync($"{BaseURL}/{sessionId}/participants/{userId}");
+            var response = await _httpClient.DeleteAsync($"{BaseSessionsUrl}/{sessionId}/participants/{userId}");
             return response.IsSuccessStatusCode;
         }
+
+        /// <summary>
+        /// Lægger <paramref name="delta"/> til den akkumulerede tæller i localStorage.
+        /// Bruges fra SushiCounter-siden hver gang man klikker.
+        /// Returnerer den nye samlede værdi.
+        /// </summary>
         public async Task<int> AddCountToSessionAsync(int delta)
         {
-            var key = "participantTotalCount";
-
             var total = 0;
-            if (await _localStorage.ContainKeyAsync(key))
-                total = await _localStorage.GetItemAsync<int>(key);
+            if (await _localStorage.ContainKeyAsync(TotalKey))
+                total = await _localStorage.GetItemAsync<int>(TotalKey);
 
             total = checked(total + delta);
-            await _localStorage.SetItemAsync(key, total);
+            await _localStorage.SetItemAsync(TotalKey, total);
             return total;
         }
+
+        /// <summary>
+        /// Hent aktuel akkumuleret tæller fra localStorage (0 hvis ikke sat).
+        /// Bruges til at vise tallet på SushiCounter efter refresh.
+        /// </summary>
         public async Task<int> GetCurrentLocalCountAsync()
         {
-            var key = "participantTotalCount";
-            if (await _localStorage.ContainKeyAsync(key))
-                return await _localStorage.GetItemAsync<int>(key);
+            if (await _localStorage.ContainKeyAsync(TotalKey))
+                return await _localStorage.GetItemAsync<int>(TotalKey);
 
             return 0;
         }
 
+        /// <summary>
+        /// Læser den akkumulerede tæller fra localStorage og sender den — samt valgfri rating —
+        /// til backend for den valgte session. Nulstiller localStorage ved succes.
+        /// </summary>
         public async Task<bool> CommitLocalCountToSessionAsync(string sessionId, string userId, int? rating = null)
         {
-            var key = "participantTotalCount";
-            var currentKey = "sushiCurrentCount";
-
             if (string.IsNullOrWhiteSpace(sessionId) || string.IsNullOrWhiteSpace(userId))
                 return false;
 
             var count = 0;
-            if (await _localStorage.ContainKeyAsync(key))
-                count = await _localStorage.GetItemAsync<int>(key);
+            if (await _localStorage.ContainKeyAsync(TotalKey))
+                count = await _localStorage.GetItemAsync<int>(TotalKey);
 
-            // Send både count og rating (payload samlet)
             var payload = new Participant
             {
                 UserId = userId,
@@ -75,15 +89,14 @@ namespace Frontend.Services
                 Rating = rating is null ? null : Math.Clamp(rating.Value, 1, 10)
             };
 
-            var response = await _httpClient.PutAsJsonAsync($"api/Sessions/{sessionId}/participants", payload);
+            var response = await _httpClient.PutAsJsonAsync($"{BaseSessionsUrl}/{sessionId}/participants", payload);
             if (!response.IsSuccessStatusCode) return false;
 
-            // Ryd op i localStorage (mf vigtigt!!!!)
-            if (await _localStorage.ContainKeyAsync(key)) await _localStorage.RemoveItemAsync(key);
-            if (await _localStorage.ContainKeyAsync(currentKey)) await _localStorage.RemoveItemAsync(currentKey);
+            // Ryd op efter succes
+            if (await _localStorage.ContainKeyAsync(TotalKey)) await _localStorage.RemoveItemAsync(TotalKey);
+            if (await _localStorage.ContainKeyAsync(CurrentKey)) await _localStorage.RemoveItemAsync(CurrentKey);
 
             return true;
         }
-
     }
 }
