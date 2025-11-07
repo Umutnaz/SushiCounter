@@ -40,14 +40,21 @@ public class ParticipantsController : ControllerBase
 
         // Reberegn totals og rating
         s.TotalCount = s.Participants.Sum(pp => Math.Max(0, pp.Count));
-        var ratings = s.Participants
-            .Where(pp => pp.Rating.HasValue)
-            .Select(pp => pp.Rating!.Value)
-            .ToList();
 
-        s.Rating = ratings.Count == 0
-            ? (int?)null
-            : Math.Clamp((int)Math.Round(ratings.Average(), MidpointRounding.AwayFromZero), 1, 10);
+        var participantsCount = s.Participants.Count;
+        if (participantsCount == 0)
+        {
+            s.Rating = null;
+        }
+        else
+        {
+            var sumRatings = s.Participants
+                .Select(pp => Math.Clamp(pp.Rating ?? 0, 0, 10))
+                .Sum();
+
+            var avg = sumRatings / (double)participantsCount;
+            s.Rating = Math.Clamp((int)Math.Round(avg, MidpointRounding.AwayFromZero), 0, 10);
+        }
 
         await _sessions.ReplaceOneAsync(x => x.SessionId == sessionId, s);
         return NoContent();
@@ -72,25 +79,37 @@ public class ParticipantsController : ControllerBase
             {
                 UserId = p.UserId,
                 Count = Math.Max(0, p.Count),
-                Rating = p.Rating is null ? null : Math.Clamp(p.Rating.Value, 1, 10)
+                // Tillad 0–10; hvis null => 0 (tæller med i gennemsnit)
+                Rating = Math.Clamp(p.Rating ?? 0, 0, 10)
             });
         }
         else
         {
             existing.Count = Math.Max(0, existing.Count + p.Count);
-            existing.Rating = p.Rating is null ? null : Math.Clamp(p.Rating.Value, 1, 10);
+            // Opdater kun rating hvis der kommer en ny værdi; ellers bevar nuværende
+            if (p.Rating.HasValue)
+            {
+                existing.Rating = Math.Clamp(p.Rating.Value, 0, 10);
+            }
         }
 
-        // Reberegn totals og gennemsnitlig rating (kun tal fra 1-10)
+        // Reberegn totals og gennemsnitlig rating over ALLE participants (0–10)
         s.TotalCount = s.Participants.Sum(pp => Math.Max(0, pp.Count));
-        var ratings = s.Participants
-            .Where(pp => pp.Rating.HasValue)
-            .Select(pp => pp.Rating!.Value)
-            .ToList();
 
-        s.Rating = ratings.Count == 0
-            ? (int?)null
-            : Math.Clamp((int)Math.Round(ratings.Average(), MidpointRounding.AwayFromZero), 1, 10);
+        var participantsCount = s.Participants.Count;
+        if (participantsCount == 0)
+        {
+            s.Rating = null;
+        }
+        else
+        {
+            var sumRatings = s.Participants
+                .Select(pp => Math.Clamp(pp.Rating ?? 0, 0, 10))
+                .Sum();
+
+            var avg = sumRatings / (double)participantsCount;
+            s.Rating = Math.Clamp((int)Math.Round(avg, MidpointRounding.AwayFromZero), 0, 10);
+        }
 
         await _sessions.ReplaceOneAsync(x => x.SessionId == sessionId, s);
         return NoContent();

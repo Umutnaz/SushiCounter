@@ -25,14 +25,15 @@
                     <div class="rating" role="radiogroup" aria-label="Vælg rating fra 1 til 10">
                         @for (int i = 10; i >= 1; i--)
                         {
-                            var id = $"star_{i}";
+                            var rating = i;
+                            var id = $"star_{rating}";
                             <input type="radio"
                                    id="@id"
                                    name="rating10"
-                                   value="@i"
-                                   checked="@(selectedRating == i)"
-                                   @onchange="() => OnRatingChanged(i)" />
-                            <label for="@id" title="@($"{i} stjerner")"></label>
+                                   value="@rating"
+                                   checked="@(selectedRating == rating)"
+                                   @onchange="() => OnRatingChanged(rating)" />
+                            <label for="@id" title="@($"{rating} stjerner")"></label>
                         }
                     </div>
 
@@ -172,7 +173,6 @@
 
         try
         {
-            // rating er valgfri (0 => null)
             int? ratingToSend = selectedRating == 0 ? (int?)null : selectedRating;
 
             var ok = await ParticipantService.CommitLocalCountToSessionAsync(
