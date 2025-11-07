@@ -10,21 +10,21 @@
 else
 {
     <div class="profile-container">
-        <h2>Hej @user.Name, her din profil</h2>
+        <h2>Hej @user.Name, her er din profil</h2>
         @if (showAlert)
         {
             <div class="alert @alertClass">@alertText</div>
         }
         <div class="profile-info">
             <label>Brugernavn:</label>
-            <input @bind="user.Name" />
+            <input @bind="user.Name"/>
 
             <label>Email:</label>
-            <input value="@user.Email" disabled />
+            <input value="@user.Email" disabled/>
 
             <label>Password:</label>
             <div class="password-field">
-                <input type="@passwordFieldType" @bind="user.Password" />
+                <input type="@passwordFieldType" @bind="user.Password"/>
                 <button type="button" class="toggle-btn" @onclick="TogglePassword">
                     @(passwordFieldType == "password" ? "Vis" : "Skjul")
                 </button>
@@ -38,10 +38,10 @@ else
             <button class="save-btn" @onclick="SaveChanges">Gem ændringer</button>
             <button type="button" @onclick="MoinMoinUser" class="btn btn-danger">Slet profil</button>
         </div>
-        
+
     </div>
-}
-<SletUserModal Visible="@visible" OnCloseRequested="@(() => visible = false)" UserToDelete="@user"/>
+
+    <SletUserModal Visible="@visible" OnCloseRequested="@(() => visible = false)" UserToDelete="@user"/>
 
 
 @code {
@@ -110,4 +110,5 @@ else
         showAlert = false;
         StateHasChanged(); // skjul beskeden igen
     }
+}
 }
