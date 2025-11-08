@@ -1,6 +1,8 @@
 ﻿@page "/MyPage"
 @inject IUserService UserService
+@inject ISessionService SessionService
 @inject NavigationManager Nav
+
 <PageTitle>Min Profil</PageTitle>
 
 @if (user == null)
@@ -17,14 +19,14 @@ else
         }
         <div class="profile-info">
             <label>Brugernavn:</label>
-            <input @bind="user.Name"/>
+            <input @bind="user.Name" />
 
             <label>Email:</label>
             <input value="@user.Email" disabled/>
 
             <label>Password:</label>
             <div class="password-field">
-                <input type="@passwordFieldType" @bind="user.Password"/>
+                <input type="@passwordFieldType" @bind="user.Password" />
                 <button type="button" class="toggle-btn" @onclick="TogglePassword">
                     @(passwordFieldType == "password" ? "Vis" : "Skjul")
                 </button>
@@ -38,11 +40,10 @@ else
             <button class="save-btn" @onclick="SaveChanges">Gem ændringer</button>
             <button type="button" @onclick="MoinMoinUser" class="btn btn-danger">Slet profil</button>
         </div>
-
     </div>
 
-    <SletUserModal Visible="@visible" OnCloseRequested="@(() => visible = false)" UserToDelete="@user"/>
-
+    <SletUserModal Visible="@visible" OnCloseRequested="@(() => visible = false)" UserToDelete="@user" />
+}
 
 @code {
     private User? user;
@@ -57,29 +58,28 @@ else
     protected override async Task OnInitializedAsync()
     {
         user = await UserService.GetUserLoggedInAsync();
-        if (user != null)
-        {
-            sessionCount = user.Sessions?.Count ?? 0;
 
-            totalCount = user.Sessions == null
-                ? 0
-                : user.Sessions
-                    .SelectMany(s => s.Participants ?? new List<Participant>())
-                    .Where(p => p.UserId == user.UserId)
-                    .Sum(p => p.Count);
+        if (user?.UserId is not null)
+        {
+            // HENT sessioner fra backend i stedet for at bruge user.Sessions
+            var mySessions = await SessionService.GetMySessionsAsync(user.UserId);
+
+            sessionCount = mySessions.Count;
+
+            totalCount = mySessions
+                .SelectMany(s => s.Participants ?? new List<Participant>())
+                .Where(p => p.UserId == user.UserId)
+                .Sum(p => p.Count);
         }
     }
 
     private void TogglePassword()
-    {
-        passwordFieldType = passwordFieldType == "password" ? "text" : "password";
-    }
+        => passwordFieldType = passwordFieldType == "password" ? "text" : "password";
 
-    private async Task MoinMoinUser()
+    private Task MoinMoinUser()
     {
-            //Visible bool er om modal skal vises eller ej, sættes derfor til true ved "OpenDeleteModal"
-            visible = true;
-        
+        visible = true;
+        return Task.CompletedTask;
     }
 
     private async Task SaveChanges()
@@ -94,7 +94,7 @@ else
         }
         catch (HttpRequestException ex)
         {
-            alertText = ex.Message; // fx “Brugernavnet er allerede valgt.”
+            alertText = ex.Message;
             alertClass = "err";
         }
         catch
@@ -103,12 +103,10 @@ else
             alertClass = "err";
         }
 
-
         showAlert = true;
-        StateHasChanged(); // vis beskeden med det samme
+        StateHasChanged();
         await Task.Delay(2000);
         showAlert = false;
-        StateHasChanged(); // skjul beskeden igen
+        StateHasChanged();
     }
-}
 }

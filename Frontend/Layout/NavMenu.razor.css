@@ -69,7 +69,7 @@
 }
 .burger.active span:nth-child(2){
     top:20px;
-    background:#ffffff;                                        /* ris */
+    background: #3179fb;                                        /* ris */
     box-shadow: inset 0 0 0 1px rgba(0,0,0,.06);
 }
 .burger.active span:nth-child(3){

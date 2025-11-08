@@ -20,7 +20,18 @@
     {
         <div class="home-card">
             <h2>Seneste session</h2>
-            <p>@(latestSession?.Title ?? "Ingen sessioner endnu")</p>
+            @if (latestSession == null)
+            {
+                <p>Ingen sessioner endnu</p>
+            }
+            else if (latestSession.RestaurantName == null)
+            {
+                <p>@latestSession.Title</p>
+            }
+            else
+            {
+                <p>@latestSession.Title + " på " + @latestSession.RestaurantName</p>
+            }
         </div>
 
         <div class="home-card">
