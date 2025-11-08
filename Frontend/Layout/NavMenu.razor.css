@@ -1,32 +1,120 @@
-/* Burger – bootstrap blå (tving farven) */
 .burger{
-    position:fixed;left:1rem;top:.75rem;z-index:1001;cursor:pointer;
-    background:transparent;border:0;padding:.25rem
+    position:fixed;
+    left:1rem;
+    top:.75rem;
+    z-index:1001;
+    cursor:pointer;
+    background:transparent;
+    border:0;
+    padding:.25rem;
+    width:44px;
+    height:44px;
+    border-radius:50%;
 }
 .burger span{
-    display:block;width:30px;height:3px;background:#0d6efd !important;
-    margin:6px 0;border-radius:2px;
-    transition:transform .3s cubic-bezier(.68,-.55,.265,1.55),opacity .3s ease
+    position:absolute;
+    left:50%;
+    transform:translateX(-50%);
+    width:26px;
+    height:3px;
+    background:#0d6efd;                  /* blå når lukket */
+    border-radius:3px;
+    top:12px;                             /* overrides pr. linje */
+    transition:
+            top .35s cubic-bezier(.22,.61,.36,1),
+            width .35s cubic-bezier(.22,.61,.36,1),
+            background-color .25s ease,
+            transform .35s cubic-bezier(.22,.61,.36,1),
+            opacity .25s ease;
+}
+.burger span:nth-child(1){ top:12px; }
+.burger span:nth-child(2){ top:20px; }
+.burger span:nth-child(3){ top:28px; }
+
+/* Baggrundscirkel (ris) der vokser ind */
+.burger::before{
+    content:"";
+    position:absolute;
+    inset:2px;
+    border-radius:50%;
+    background:#fff;
+    transform:scale(.2);
+    opacity:0;
+    transition: transform .40s cubic-bezier(.22,.61,.36,1), opacity .30s ease;
+    z-index:-1;
+    box-shadow:0 6px 18px rgba(0,0,0,.18);
 }
 
-/* Side-panel – BLÅ ikke lilla */
+/* Sort ring (nori) lidt forsinket */
+.burger::after{
+    content:"";
+    position:absolute;
+    inset:2px;
+    border-radius:50%;
+    box-shadow: inset 0 0 0 3px #000;
+    transform:scale(.2);
+    opacity:0;
+    transition: transform .40s .12s cubic-bezier(.22,.61,.36,1), opacity .30s .12s ease;
+    pointer-events:none;
+}
+
+/* Aktiv: burgeren ligner sushi */
+.burger.active::before{ transform:scale(1); opacity:1; }
+.burger.active::after{  transform:scale(1); opacity:1; }
+
+.burger.active span{ width:22px; }
+.burger.active span:nth-child(1){
+    top:14px;
+    background:linear-gradient(90deg,#ff6b6b 0%, #ffa94d 100%); /* laks */
+}
+.burger.active span:nth-child(2){
+    top:20px;
+    background:#ffffff;                                        /* ris */
+    box-shadow: inset 0 0 0 1px rgba(0,0,0,.06);
+}
+.burger.active span:nth-child(3){
+    top:26px;
+    background:linear-gradient(90deg,#2f9e44 0%, #37b24d 100%); /* avocado/agurk */
+}
+
+/* Subtil hover når lukket */
+.burger:not(.active):hover span{ background:#66b2ff; }
+
+/* =======================
+   Slide-out side panel
+   ======================= */
 .side-menu{
-    position:fixed;left:-270px;top:0;width:260px;height:100vh;overflow-y:auto;
-    padding-top:4rem;
-    background: linear-gradient(180deg, #0d6efd 0%, #0a58ca 100%); /* blå */
-    box-shadow: 2px 0 16px rgba(0,0,0,.35);
-    transition:left .35s ease; z-index:1000
+    position:fixed;
+    left:-270px;
+    top:0;
+    width:260px;
+    height:100vh;
+    overflow-y:auto;
+    padding-top:4rem; /* plads til burger/topbar */
+    background:linear-gradient(180deg,#0d6efd 0%, #0a58ca 100%); /* blå */
+    box-shadow:2px 0 16px rgba(0,0,0,.35);
+    transition:left .35s ease;
+    z-index:1000;
 }
-.side-menu.open{left:0}
+.side-menu.open{ left:0; }
 
-/* Backdrop */
-.backdrop{position:fixed;inset:0;background:rgba(0,0,0,.35);z-index:999}
+/* Backdrop klik-luk */
+.backdrop{
+    position:fixed;
+    inset:0;
+    background:rgba(0,0,0,.35);
+    z-index:999;
+}
 
-/* Links */
-.nav-item{padding:.5rem 1rem}
+/* Links i panelet */
+.nav-item{ padding:.5rem 1rem; }
 .nav-item ::deep a{
-    color:#e9f1ff;display:block;text-decoration:none;border-radius:8px;
-    padding:.6rem .8rem;transition:background .2s
+    color:#e9f1ff;
+    display:block;
+    text-decoration:none;
+    border-radius:8px;
+    padding:.6rem .8rem;
+    transition:background .2s;
 }
-.nav-item ::deep a:hover{background:rgba(255,255,255,.12);color:#fff}
-.nav-item ::deep a.active{background:rgba(255,255,255,.22);color:#fff}
+.nav-item ::deep a:hover{  background:rgba(255,255,255,.12); color:#fff; }
+.nav-item ::deep a.active{ background:rgba(255,255,255,.22); color:#fff; }
