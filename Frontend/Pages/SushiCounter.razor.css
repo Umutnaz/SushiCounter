@@ -1,0 +1,49 @@
+/* Card + layout */
+.counter-wrap{max-width:900px;margin:2rem auto;background:#fff;border-radius:14px;box-shadow:0 10px 30px rgba(0,0,0,.08);padding:2rem 1.5rem;text-align:center}
+.status{margin:.25rem 0 1.25rem;font-size:1.05rem}.status .count{font-weight:700;color:#0d6efd}
+.sushi-display{display:flex;justify-content:center;align-items:center;min-height:200px;margin-bottom:1rem}
+.btn-row{display:flex;gap:.75rem;justify-content:center;flex-wrap:wrap}
+
+/* Sushi base */
+.sushi{--w:120px;--h:120px;--r:50%;--sh:0 14px 34px rgba(0,0,0,.18);width:var(--w);height:var(--h);position:relative;border-radius:var(--r);cursor:pointer;box-shadow:var(--sh);transition:transform .25s,box-shadow .25s,filter .25s;animation:sPop .35s}
+.sushi:active{transform:translateY(-8px) scale(1.03);box-shadow:0 18px 38px rgba(0,0,0,.22)}
+@keyframes sPop{0%{transform:scale(.85);opacity:0}100%{transform:scale(1);opacity:1}}
+.sushi .nori,.sushi .rice,.sushi .filling,.sushi .topping,.sushi .band{position:absolute;border-radius:50%}
+.sushi .nori{inset:0;background:#111;box-shadow:inset -10px -10px 0 rgba(255,255,255,.06)}
+.sushi .rice{inset:10px;background:radial-gradient(#eef6fb 1.2px,transparent 1.6px) 0 0/12px 12px,radial-gradient(#e9f1f6 1.2px,transparent 1.6px) 6px 6px/12px 12px,#fff;box-shadow:inset 0 0 0 2px rgba(0,0,0,.06)}
+.sushi .filling{inset:28px;background:#ff6b6b;box-shadow:inset 0 0 0 1px rgba(0,0,0,.05),0 4px 10px rgba(0,0,0,.12)}
+.sushi .topping{inset:28px;background:transparent}.sushi .band{display:none}
+
+/* MAKIs */
+#sushi1 .filling{background:radial-gradient(circle at 60% 40%,rgba(255,255,255,.35) 12%,transparent 13%) 0 0/60% 60%,linear-gradient(140deg,#ff7b62,#ff986e 55%,#ffa16a)}
+#sushi2 .filling{background:linear-gradient(90deg,#2f9e44 0 48%,#83e377 48% 52%,#7ccfda 52% 100%)}
+#sushi4 .nori{background:#fff;box-shadow:inset 0 0 0 2px rgba(0,0,0,.06)}#sushi4 .rice{inset:4px;opacity:.16}
+#sushi4 .filling{background:radial-gradient(circle at 35% 55%,#ff847c 24%,transparent 25%) 0 0/100% 100%,radial-gradient(circle at 65% 45%,#38b000 22%,transparent 23%) 0 0/100% 100%,linear-gradient(180deg,#fff3e0,#ffe8cc)}
+#sushi6 .filling{background:radial-gradient(circle at 70% 30%,rgba(255,255,255,.35) 12%,transparent 13%) 0 0/60% 60%,linear-gradient(140deg,#ff5d5d,#ff7b62 55%,#ff986e)}
+#sushi8 .filling{background:conic-gradient(#ff6b6b 0 18%,#ffa94d 18% 36%,#ffe066 36% 54%,#37b24d 54% 72%,#0d6efd 72% 100%)}
+#sushi10 .filling{background:radial-gradient(circle at 60% 40%,#fff 26%,transparent 27%) 0 0/100% 100%,linear-gradient(140deg,#ff7b62,#ffa16a)}
+#sushi11 .nori{background:#fff;box-shadow:inset 0 0 0 2px rgba(0,0,0,.06)}#sushi11 .rice{inset:4px;opacity:.16}
+#sushi11 .filling{inset:26px;border-radius:36px;background:linear-gradient(180deg,#ff7b62,#ff986e)}
+#sushi11 .topping{inset:14px;border-radius:50%;background:radial-gradient(circle at 30% 40%,#a7e27f 18%,transparent 19%) 0 0/40% 40%,radial-gradient(circle at 60% 60%,#8fd36d 18%,transparent 19%) 20% 20%/40% 40%,radial-gradient(circle at 40% 70%,#78c455 18%,transparent 19%) 40% 0/40% 40%;opacity:.9}
+#sushi12{--w:150px;--h:110px;--r:40px}#sushi12 .nori{border-radius:40px;background:linear-gradient(#0f0f0f,#151515)}
+#sushi12 .rice{inset:14px 10px 40px;border-radius:30px}
+#sushi12 .filling{left:8%;right:8%;top:10%;bottom:46%;border-radius:28px;background:radial-gradient(circle at 20% 30%,#ffa69e 8%,transparent 9%) 0 0/26px 26px,radial-gradient(circle at 60% 60%,#ff5d5d 9%,transparent 10%) 10px 8px/26px 26px,radial-gradient(circle at 80% 40%,#ff7b62 8%,transparent 9%) 4px 16px/26px 26px,#ff6b6b}
+#sushi14 .filling{background:linear-gradient(180deg,#7a4d2a,#9b6539)}
+#sushi15 .filling{background:linear-gradient(180deg,#ffe066,#f5c542)}
+#sushi16 .filling{background:radial-gradient(circle at 60% 40%,rgba(255,255,255,.35) 12%,transparent 13%) 0 0/60% 60%,linear-gradient(140deg,#ff9f1a,#f08c00 55%,#d9822b)}
+#sushi17 .filling{background:radial-gradient(circle at 65% 45%,#37b24d 20%,transparent 21%) 0 0/100% 100%,linear-gradient(140deg,#e4373a,#f1565c)}
+#sushi19 .filling{background:conic-gradient(#ff6b6b 0 22%,#2f9e44 22% 40%,#ffa94d 40% 58%,#0d6efd 58% 76%,#ffe066 76% 100%)}
+#sushi20 .filling{background:radial-gradient(circle at 38% 52%,#2f9e44 22%,transparent 23%) 0 0/100% 100%,radial-gradient(circle at 58% 48%,#7ccfda 18%,transparent 19%) 0 0/100% 100%,radial-gradient(circle at 70% 60%,#ff9f1a 18%,transparent 19%) 0 0/100% 100%,#fff}
+
+/* NIGIRIs – ingen sort nori-bund + ekstra skygge direkte på stykket */
+#sushi3,#sushi5,#sushi7,#sushi9,#sushi13,#sushi18{--w:170px;--h:100px;--r:46% 46% 40% 40%;--sh:0 16px 36px rgba(0,0,0,.2)}
+#sushi3 .nori,#sushi5 .nori,#sushi7 .nori,#sushi9 .nori,#sushi13 .nori,#sushi18 .nori{background:#fff;box-shadow:inset 0 0 0 2px rgba(0,0,0,.05),0 4px 10px rgba(0,0,0,.08)}
+#sushi3 .rice,#sushi5 .rice,#sushi7 .rice,#sushi9 .rice,#sushi13 .rice,#sushi18 .rice{inset:8px 10px 18px;border-radius:48% 48% 40% 40%}
+#sushi3 .filling,#sushi5 .filling,#sushi7 .filling,#sushi9 .filling,#sushi13 .filling,#sushi18 .filling{left:10%;right:10%;top:18%;bottom:36%;border-radius:26px;box-shadow:inset 0 0 0 1px rgba(0,0,0,.06),0 6px 12px rgba(0,0,0,.12)}
+#sushi3 .filling{background:repeating-linear-gradient(20deg,rgba(255,255,255,.28),rgba(255,255,255,.28) 6px,transparent 6px,transparent 16px),linear-gradient(180deg,#e4373a,#f1565c)}
+#sushi5 .filling{background:repeating-linear-gradient(0deg,rgba(255,255,255,.3),rgba(255,255,255,.3) 7px,transparent 7px,transparent 14px),linear-gradient(180deg,#ffb4a2,#ff8fa3)}
+#sushi7 .filling{background:linear-gradient(180deg,#ffe066,#f5c542)}#sushi7 .band,
+                                                                    #sushi5 .band,#sushi13 .band{display:block;position:absolute;left:50%;top:18%;transform:translateX(-50%);width:34%;height:56%;border-radius:12px;background:#101;box-shadow:inset 0 0 0 1px rgba(255,255,255,.08)}
+#sushi9 .filling{background:repeating-linear-gradient(20deg,rgba(255,255,255,.33),rgba(255,255,255,.33) 6px,transparent 6px,transparent 16px),linear-gradient(180deg,#ff7b62,#ff986e)}
+#sushi13 .filling{background:linear-gradient(180deg,#8d4e2a,#ad5e2f 40%,#c46b33)}
+#sushi18 .filling{left:8%;right:8%;top:16%;bottom:32%;border-radius:24px;background:linear-gradient(180deg,#dd9a4a,#c9822f)}

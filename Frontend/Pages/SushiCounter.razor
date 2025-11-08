@@ -9,6 +9,15 @@
     <h1>Counter</h1>
 
     <p class="status" role="status">Current count: <span class="count">@currentCount</span></p>
+    <div class="sushi-display">
+        <div id="@($"sushi{sushiIndex}")" class="sushi" @onclick="IncrementCount" title="Klik for +1">
+            <div class="nori"></div>
+            <div class="rice"></div>
+            <div class="filling"></div>
+            <div class="topping"></div>
+            <div class="band"></div>
+        </div>
+    </div>
 
     <div class="btn-row">
         <button class="btn btn-primary" @onclick="IncrementCount">Click me</button>
@@ -22,6 +31,8 @@
                     OnCommitted="@OnCommitted" />
 
 @code {
+    private int sushiIndex = 1;
+    private const int totalSushi = 20; //Mhp at styre antallet af forskellige sushi billeder til fremtidig opgradering
     private bool modalVisible = false;
     private string? currentUserId;
     int currentCount = 0;
@@ -39,6 +50,7 @@
     {
         // Gemmer +1 i localStorage via servicen og opdaterer UI med den nye total
         currentCount = await ParticipantService.AddCountToSessionAsync(1);
+        sushiIndex = (sushiIndex % totalSushi) + 1;
     }
 
     private Task AddToSession()
