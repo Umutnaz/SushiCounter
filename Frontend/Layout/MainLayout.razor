@@ -2,22 +2,23 @@
 @inject IUserService UserService
 @inject NavigationManager Nav
 
-<div class="page">
-    <div class="sidebar">
-        <NavMenu/>
-    </div>
+<div class="layout">
+    <header class="top-row">
+        <!-- Burger ligger i NavMenu (fast venstre) -->
+        <div class="brand">SushiCounterApp</div>
 
-    <main>
-        <div class="top-row px-4">
+        <nav class="top-actions">
             @if (user != null)
             {
                 <a href="#" @onclick="Logout">Log ud</a>
             }
-        </div>
+        </nav>
+    </header>
 
-        <article class="content px-4">
-            @Body
-        </article>
+    <NavMenu />
+
+    <main class="content">
+        @Body
     </main>
 </div>
 
@@ -26,18 +27,15 @@
 
     private async Task Logout()
     {
-        await UserService.Logout();   // fjerner fra localStorage
-        user = null;                  // opdatér UI med det samme
+        await UserService.Logout();
+        user = null;
         await InvokeAsync(StateHasChanged);
-        Nav.NavigateTo("/", true);    // fuld refresh
+        Nav.NavigateTo("/", true);
     }
 
-    protected override async Task OnInitializedAsync()
-    {
+    protected override async Task OnInitializedAsync() =>
         user = await UserService.GetUserLoggedInAsync();
-    }
 
-    // Kører ved hver parameter/rute-ændring -> fanger login der sker andre steder
     protected override async Task OnParametersSetAsync()
     {
         var current = await UserService.GetUserLoggedInAsync();
