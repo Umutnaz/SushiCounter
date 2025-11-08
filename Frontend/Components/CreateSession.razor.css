@@ -66,11 +66,7 @@ textarea.input { resize: vertical; }
     display: flex; align-items: center;
 }
 
-.readonly-list { margin: .25rem 0 0; padding-left: 1rem; }
-.readonly-list li { margin: .2rem 0; }
-
-.badge { display: inline-block; padding: .1rem .45rem; border-radius: .35rem; font-size: .8rem; }
-.badge-you { background: #e7f1ff; color: #0b5ed7; border: 1px solid #cfe2ff; margin-left: .35rem; }
+.muted { color: #6c757d; font-size: .9rem; }
 
 .owner-actions { margin-top: .6rem; display: flex; gap: .5rem; }
 
@@ -84,3 +80,25 @@ textarea.input { resize: vertical; }
 .btn-danger:hover { filter: brightness(0.95); }
 .btn-danger-outline { background: #fff; color: #dc3545; border: 1px solid #dc3545; }
 .btn-danger-outline:hover { background: #fff5f6; }
+
+/* --- Deltagerliste, ens for ejer/ikke-ejer --- */
+.participant-summary {
+    margin-top: .75rem;
+    border-top: 1px dashed #e9ecef;
+    padding-top: .6rem;
+    display: grid;
+    gap: .35rem;
+}
+.participant-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: #fff;
+    border: 1px solid #e9ecef;
+    border-radius: .45rem;
+    padding: .45rem .6rem;
+}
+.p-name { font-weight: 600; color: #212529; display: flex; align-items: center; gap: .4rem; }
+.p-count { font-variant-numeric: tabular-nums; color: #0b5ed7; font-weight: 600; }
+.p-badge-you { background: #e7f1ff; color: #0b5ed7; border: 1px solid #cfe2ff; border-radius: .35rem; padding: .05rem .35rem; font-size: .75rem; }
+.p-badge-owner { background: #eef7ee; color: #2f7a2f; border: 1px solid #cfe9cf; border-radius: .35rem; padding: .05rem .35rem; font-size: .75rem; }
