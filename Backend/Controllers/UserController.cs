@@ -1,4 +1,5 @@
-﻿using Core;
+﻿using System.Text.RegularExpressions;
+using Core;
 using Microsoft.AspNetCore.Mvc;
 using MongoDB.Bson;
 using MongoDB.Driver;
@@ -41,14 +42,21 @@ public class UsersController : ControllerBase
         var list = await _users.Find(_ => true).ToListAsync();
         return Ok(list);
     }
-
-    // GET: api/Users/login/{email}/{password}
+//email er case-insensitive
+// password er case-sensitive
+// brugernavn er ikke med i login, derfor ligemeget.. skal man ændre det gør man det bare i profilen (mypage)
     [HttpGet("login/{email}/{password}")]
     public async Task<ActionResult<User>> Login(string email, string password)
     {
-        // (Matcher din nuværende frontend – plain text password)
-        var user = await _users.Find(u => u.Email == email && u.Password == password).FirstOrDefaultAsync();
+        var filter = Builders<User>.Filter.And(
+            Builders<User>.Filter.Eq(u => u.Password, password),
+            Builders<User>.Filter.Regex(u => u.Email,
+                new MongoDB.Bson.BsonRegularExpression($"^{Regex.Escape(email)}$", "i")) // "i" = case-insensitive
+        );
+
+        var user = await _users.Find(filter).FirstOrDefaultAsync();
         if (user is null) return NotFound();
+
         return Ok(user);
     }
 
