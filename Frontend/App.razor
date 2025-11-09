@@ -20,7 +20,7 @@
         var user = await UserService.GetUserLoggedInAsync();
         if (user != null)
         {
-            nav.NavigateTo("/Home", forceLoad: false); //Skal være true så siden loader så burgermenuen også opdateres korrekt
+            nav.NavigateTo("/Home", forceLoad: false); //True for epeleptik shok
         }
         else
         {
@@ -29,5 +29,8 @@
         }
 
     }
-
+//Bemærk: forceload true før at det looper derudaf
+//bemærk at med nav manager her så behøver ingen page at have det for kontrol om man er logget ind,
+//Kun login page, den har det så også kun, så du sikre dig at forceload er true, så burgermenu kommer frem
+//FAQ har det også så man kan gå til forsekllige pages fra de respektive faq,er
 }
