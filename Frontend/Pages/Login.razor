@@ -56,7 +56,7 @@
       <div class="msg">@message</div>
     }
 
-    <button class="submit" type="submit">@((New ? "Opret konto" : "Log ind"))</button>
+    <button class="submit" type="submit">@((New ? "Opret konto og log ind" : "Log ind"))</button>
 
     <button type="button" class="submit" @onclick="ToggleNew">
       @(New ? "Har du allerede en konto? Log ind" : "Ny bruger? Opret konto")
@@ -187,13 +187,12 @@
           message = "Kunne ikke oprette bruger (findes måske allerede).";
           return;
         }
-
-        // valgfrit: log ind efter oprettelse
+        
         var logged = await UserService.Login(email!, password!);
-        if (logged is not null)
-          nav.NavigateTo("/MyPage", forceLoad: false);
+       if (logged is not null)
+         nav.NavigateTo("/Home", forceLoad: true);
         else
-          message = "Bruger oprettet, men automatisk login fejlede.";
+         message = "Bruger oprettet, men automatisk login fejlede.";
       }
       catch (HttpRequestException ex)
       {
@@ -209,7 +208,7 @@
         message = "Der opstod en fejl under oprettelsen.";
       }
 
-    }
+    } 
     else
     {
       if (string.IsNullOrWhiteSpace(email) ||
@@ -225,7 +224,7 @@
 
         if (user is not null)
         {
-          nav.NavigateTo("/Home", forceLoad: false);
+         nav.NavigateTo("/Home", forceLoad: true);
         }
         else
         {
@@ -239,21 +238,4 @@
       }
     }
   }
-
-  protected override async Task OnInitializedAsync()
-  {
-    try
-    {
-      var user = await UserService.GetUserLoggedInAsync();
-      if (user is not null)
-      {
-        nav.NavigateTo("/Home", forceLoad: false);
-      }
-    }
-    catch
-    {
-      // ignorer – ingen aktiv session
-    }
-  }
-
 }

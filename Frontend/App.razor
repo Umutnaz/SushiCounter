@@ -1,4 +1,6 @@
-﻿<Router AppAssembly="@typeof(App).Assembly">
+﻿@inject IUserService UserService
+@inject NavigationManager nav
+<Router AppAssembly="@typeof(App).Assembly">
     <Found Context="routeData">
         <RouteView RouteData="@routeData" DefaultLayout="@typeof(MainLayout)"/>
         <FocusOnNavigate RouteData="@routeData" Selector="h1"/>
@@ -10,3 +12,22 @@
         </LayoutView>
     </NotFound>
 </Router>
+
+@code {
+
+    protected override async Task OnInitializedAsync()
+    {
+        var user = await UserService.GetUserLoggedInAsync();
+        if (user != null)
+        {
+            nav.NavigateTo("/Home", forceLoad: false); //Skal være true så siden loader så burgermenuen også opdateres korrekt
+        }
+        else
+        {
+            nav.NavigateTo("/", forceLoad: false);
+
+        }
+
+    }
+
+}
