@@ -25,12 +25,10 @@
 @code {
     private User? user;
 
-    private async Task Logout()
+    private async Task Logout() //siger not used, men knappen fungerer, så idk
     {
         await UserService.Logout();
-        user = null;
-        await InvokeAsync(StateHasChanged);
-        Nav.NavigateTo("/", true);
+        Nav.NavigateTo("/", true); //forceload skal være true, megget vigtigt!
     }
 
     protected override async Task OnInitializedAsync() =>

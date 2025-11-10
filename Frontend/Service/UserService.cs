@@ -17,15 +17,6 @@ namespace Frontend.Services
             _httpClient = httpClient;
             _localStorage = localStorage;
         }
-        
-        // henter alle brugere fra databasen
-        // return: liste med alle brugere
-        public async Task<List<User>> GetAllUsersAsync()
-        {
-            var users = await _httpClient.GetFromJsonAsync<List<User>>(BaseURL);
-            return users ?? new List<User>();
-        }
-        
         // forsøger at logge en bruger ind med e-mail og password
         // return: userobjekt hvis login er succesfuldt, ellers null
         public async Task<User?> Login(string email, string password)
@@ -93,17 +84,6 @@ namespace Frontend.Services
             var fresh = await GetUserByUserId(user.UserId);
             await _localStorage.SetItemAsync("user", fresh ?? user);
         }
-
-
-        // logger brugeren ud ved at fjerne brugerdata fra local storage
-        
-        // henter det højeste bruger-id fra databasen
-        // return: største id som int
-        public async Task<int> GetMaxUserId()
-        {
-            return await _httpClient.GetFromJsonAsync<int>($"{BaseURL}/maxid");
-        }
-
         // henter en specifik bruger baseret på id
         // return: userobjekt hvis fundet, ellers null
         public async Task<User?> GetUserByUserId(string userId)
