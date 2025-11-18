@@ -157,24 +157,35 @@
     message = null;
   }
 
-  private async Task HandleSubmit()
+    private async Task HandleSubmit()
   {
     message = null;
-    
-    //Interne fejlbeskeder hvis felterne herunder ikke er udfyldt
+
+    // Fælles validering for email/password
+    if (string.IsNullOrWhiteSpace(email) || string.IsNullOrWhiteSpace(password))
+    {
+      message = New ? "Udfyld venligst alle felter." : "Angiv email og password.";
+      return;
+    }
+
+    // Fælles max-længde på password (matcher model-attributten)
+    if (password!.Length > 100)
+    {
+      message = "Password må maks være 100 tegn langt.";
+      return;
+    }
+
+    // Kun ved oprettelse: navn er også required
+    if (New && string.IsNullOrWhiteSpace(name))
+    {
+      message = "Udfyld venligst alle felter.";
+      return;
+    }
+
     if (New)
     {
-      if (string.IsNullOrWhiteSpace(name) ||
-          string.IsNullOrWhiteSpace(email) ||
-          string.IsNullOrWhiteSpace(password))
-      {
-        message = "Udfyld venligst alle felter.";
-        return;
-      }
-
       try
       {
-        // Send KUN Name, Email, Password til servicen
         var created = await UserService.AddUserAsync(new User
         {
           Name = name!,
@@ -187,12 +198,13 @@
           message = "Kunne ikke oprette bruger (findes måske allerede).";
           return;
         }
-        
+
         var logged = await UserService.Login(email!, password!);
-       if (logged is not null)
-         nav.NavigateTo("/Home", forceLoad: true);
+
+        if (logged is not null)
+          nav.NavigateTo("/Home", forceLoad: true);
         else
-         message = "Bruger oprettet, men automatisk login fejlede.";
+          message = "Bruger oprettet, men automatisk login fejlede.";
       }
       catch (HttpRequestException ex)
       {
@@ -200,37 +212,26 @@
           message = "Brugernavnet er allerede valgt.";
         else if (ex.Message.Contains("Email findes allerede", StringComparison.OrdinalIgnoreCase))
           message = "Denne email er allerede registreret.";
+        else if (ex.Message.Contains("Password må maks være 100 tegn langt", StringComparison.OrdinalIgnoreCase))
+          message = "Password må maks være 100 tegn langt.";
         else
           message = "Kunne ikke oprette bruger. Prøv igen.";
       }
-      catch (Exception)
+      catch
       {
         message = "Der opstod en fejl under oprettelsen.";
       }
-
-    } 
+    }
     else
     {
-      if (string.IsNullOrWhiteSpace(email) ||
-          string.IsNullOrWhiteSpace(password))
-      {
-        message = "Angiv email og password.";
-        return;
-      }
-
       try
       {
         var user = await UserService.Login(email!, password!);
 
         if (user is not null)
-        {
-         nav.NavigateTo("/Home", forceLoad: true);
-        }
+          nav.NavigateTo("/Home", forceLoad: true);
         else
-        {
           message = "Forkert email eller password.";
-        }
-        
       }
       catch (Exception ex)
       {
@@ -238,4 +239,6 @@
       }
     }
   }
+
+
 }

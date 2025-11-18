@@ -1,4 +1,5 @@
-﻿using MongoDB.Bson;
+﻿using System.ComponentModel.DataAnnotations;
+using MongoDB.Bson;
 using MongoDB.Bson.Serialization.Attributes;
 
 namespace Core;
@@ -10,7 +11,8 @@ public class User
     public string? UserId { get; set; } // MongoDB ObjectId som string
     public string Name { get; set; } //Brugernavn synligt for alle
     public string Email { get; set; } //Brugerens email, skal være unik
-    public string Password { get; set; } //Brugerens password, skal
+    [StringLength(100, ErrorMessage = "Password må maks være 100 tegn langt.")]
+    public string Password { get; set; } //Brugerens password, hashes i controller
     public DateTime CreatedAt { get; set; } //Hvornår brugeren blev oprettet
     public DateTime UpdatedAt { get; set; } //Hvornår brugeren sidst blev opdateret
     public List<User> Friends { get; set; } = new(); //Liste over brugerens venner

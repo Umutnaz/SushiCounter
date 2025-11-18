@@ -3,6 +3,7 @@ using Core;
 using Microsoft.AspNetCore.Mvc;
 using MongoDB.Bson;
 using MongoDB.Driver;
+using Backend; //hashed fil
 
 namespace Backend.Controllers;
 
@@ -42,16 +43,29 @@ public class UsersController : ControllerBase
         var list = await _users.Find(_ => true).ToListAsync();
         return Ok(list);
     }
+// GET: api/Users/login/{email}/{password}
 //email er case-insensitive
 // password er case-sensitive
 // brugernavn er ikke med i login, derfor ligemeget.. skal man ændre det gør man det bare i profilen (mypage)
     [HttpGet("login/{email}/{password}")]
     public async Task<ActionResult<User>> Login(string email, string password)
     {
+        // 1) Vi laver den samme hash på det password, som brugeren skriver ved login,
+        //    som vi laver ved oprettelse. Så sammenligner vi "hashet mod hash".
+        //    → Vi skal ALDRIG forsøge at "un-hashe".
+        var hashedInputPassword = PasswordHasherLinearProbing.Hash(password);
+
+        // 2) Nu sammenligner vi den hash, vi lige har regnet, med hash-værdien i databasen.
         var filter = Builders<User>.Filter.And(
-            Builders<User>.Filter.Eq(u => u.Password, password),
-            Builders<User>.Filter.Regex(u => u.Email,
-                new MongoDB.Bson.BsonRegularExpression($"^{Regex.Escape(email)}$", "i")) // "i" = case-insensitive
+            // Password gemmes i DB som hash (kun tal i en streng),
+            // så vi søger på den hash-værdi:
+            Builders<User>.Filter.Eq(u => u.Password, hashedInputPassword),
+
+            // Email er case-insensitive altså at alt bliver småt
+            Builders<User>.Filter.Regex(
+                u => u.Email,
+                new MongoDB.Bson.BsonRegularExpression($"^{Regex.Escape(email)}$", "i")
+            )
         );
 
         var user = await _users.Find(filter).FirstOrDefaultAsync();
@@ -60,7 +74,7 @@ public class UsersController : ControllerBase
         return Ok(user);
     }
 
-    // POST: api/Users/opret
+// POST: api/Users/opret
     [HttpPost("opret")]
     public async Task<ActionResult<User>> Opret([FromBody] User input)
     {
@@ -72,14 +86,20 @@ public class UsersController : ControllerBase
             return BadRequest("Name, Email og Password er påkrævet.");
         }
 
+        // Her laver vi hash'en, INDEN vi gemmer brugeren:
+        // 1) Vi trimmer password → fjerner utilsigtede mellemrum før/efter.
+        // 2) Vi laver hash → output er en streng bestående kun af tal,
+        //    to cifre pr. tegn i det oprindelige password.
+        var hashedPassword = PasswordHasherLinearProbing.Hash(input.Password.Trim());
+
         var now = DateTime.UtcNow;
 
         var newUser = new User
         {
             // UserId må være null/empty – Mongo sætter ObjectId
             Name = input.Name.Trim(),
-            Email = input.Email.Trim().ToLowerInvariant(),
-            Password = input.Password, 
+            Email = input.Email.Trim().ToLowerInvariant(), // email gemmes i lowercase
+            Password = hashedPassword,                     // GEM ALTID HASH, ALDRIG klartekst
             CreatedAt = now,
             UpdatedAt = now,
             Sessions = new List<Session>()
@@ -101,6 +121,7 @@ public class UsersController : ControllerBase
             return Conflict("Bruger findes allerede.");
         }
     }
+
 
     // PUT: api/Users/update
     // (simpel profil-opdatering – password håndteres ikke her)
