@@ -153,16 +153,7 @@ public class UsersController : ControllerBase
         }
     }
 
-    // GET: api/Users/maxid
-    // (Din service forventer en int – vi returnerer antal brugere)
-    [HttpGet("maxid")]
-    public async Task<ActionResult<int>> GetMaxId()
-    {
-        var count = (int)await _users.CountDocumentsAsync(_ => true);
-        return Ok(count);
-    }
-
-    // GET: api/Users/user/{userId}
+    // GET: api/Users/user/{userId} bruges fra service men fra controllerens opret funk
     [HttpGet("user/{userId}")]
     public async Task<ActionResult<User>> GetById(string userId)
     {
