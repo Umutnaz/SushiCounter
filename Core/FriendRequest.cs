@@ -12,9 +12,9 @@ namespace Core
 
     public class FriendRequest
     {
-        [BsonId]
+        // embedded -> ikke BsonId her, bare et id-felt
         [BsonRepresentation(BsonType.ObjectId)]
-        public string? RequestId { get; set; }
+        public string RequestId { get; set; } = ObjectId.GenerateNewId().ToString();
 
         [BsonRepresentation(BsonType.ObjectId)]
         public string FromUserId { get; set; } = default!;
@@ -23,12 +23,9 @@ namespace Core
         public string ToUserId { get; set; } = default!;
 
         public FriendRequestStatus Status { get; set; } = FriendRequestStatus.Pending;
-
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
-
         public DateTime? RespondedAt { get; set; }
 
-        // Valgfrit: Denormaliseret visning i frontend (lagres ikke i Mongo)
         [BsonIgnore] public User? FromUser { get; set; }
         [BsonIgnore] public User? ToUser { get; set; }
     }

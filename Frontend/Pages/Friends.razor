@@ -19,7 +19,13 @@ else
         <div class="tabs">
             <button class='tab @(activeTab == "friends" ? "active" : null)'   @onclick='() => SetTab("friends")'>Venner</button>
             <button class='tab @(activeTab == "search"  ? "active" : null)'   @onclick='() => SetTab("search")'>Søg</button>
-            <button class='tab @(activeTab == "requests"? "active" : null)'   @onclick='() => SetTab("requests")'>Anmodninger</button>
+            <button class='tab @(activeTab == "requests"? "active" : null)' @onclick='() => SetTab("requests")'>
+                Anmodninger
+                @if (incomingRequests?.Count > 0)
+                {
+                    <span class="badge">@incomingRequests.Count</span>
+                }
+            </button>
         </div>
 
         <div class="panel">
@@ -64,7 +70,7 @@ else
                 {
                     @if (searchResults.Count == 0)
                     {
-                        <p>Ingen brugere fundet.</p>
+                        <p>Indsats et navn for at finde den ønsket profil</p>
                     }
                     else
                     {

@@ -17,6 +17,8 @@ public class User
     public DateTime UpdatedAt { get; set; } //Hvornår brugeren sidst blev opdateret
     public List<User> Friends { get; set; } = new(); //Liste over brugerens venner
     public List<Session> Sessions { get; set; } = new(); //Liste over sessioner brugeren har oprettet
+    public List<FriendRequest> IncomingRequests { get; set; } = new(); //kræver at det er her for at det kan embeddes i mongodb
+    public List<FriendRequest> OutgoingRequests { get; set; } = new();
     
 }
 
