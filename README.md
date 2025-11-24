@@ -39,11 +39,10 @@ MONGO_DATABASE_NAME=DBNAVN
 ---
 
 ### 🗂️ Collections (MONGODB)
-Du skal have 3 collections for at dette projekt kan fungere på din IDE:
+Du skal have bare 2 collections for at dette projekt kan fungere på din IDE:
 
 1. Users
 2. Sessions
-3. FriendRequests
 ---
 
 ### 🍱 Hvad så nu?
