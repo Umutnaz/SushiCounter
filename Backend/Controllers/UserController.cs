@@ -136,7 +136,12 @@ public class UsersController : ControllerBase
             .Set(u => u.Name, updated.Name)
             .Set(u => u.Email, updated.Email.ToLowerInvariant())
             .Set(u => u.UpdatedAt, DateTime.UtcNow);
-
+// hashing af password håndteres her(under update funktionen):
+        if (!string.IsNullOrWhiteSpace(updated.Password))
+        {
+            var hashedPassword = PasswordHasherLinearProbing.Hash(updated.Password.Trim());
+            update = update.Set(u => u.Password, hashedPassword);
+        }
         try
         {
             var result = await _users.UpdateOneAsync(filter, update);

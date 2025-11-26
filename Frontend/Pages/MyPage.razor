@@ -23,9 +23,9 @@ else
             <label>Email:</label>
             <input value="@user.Email" disabled/>
 
-            <label>Password:</label>
-            <div class="password-field">
-                <input type="@passwordFieldType" @bind="user.Password" />
+            <label>Opdater password:</label>
+            <div class="password-field"><!--@bind="user.Password" fjernet fra input som start til opdatere--> 
+                <input type="@passwordFieldType"  />
                 <button type="button" class="toggle-btn" @onclick="TogglePassword">
                     @(passwordFieldType == "password" ? "Vis" : "Skjul")
                 </button>

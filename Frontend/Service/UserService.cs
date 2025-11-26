@@ -88,7 +88,7 @@ namespace Frontend.Services
         // return: userobjekt hvis fundet, ellers null
         public async Task<User?> GetUserByUserId(string userId)
         {
-            Console.WriteLine($"Returning user: {userId}: service");
+            Console.WriteLine($":Service: Returning user: {userId}: service");
             return await _httpClient.GetFromJsonAsync<User>($"{BaseURL}/user/{userId}");
         }
         
