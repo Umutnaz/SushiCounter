@@ -69,6 +69,16 @@ namespace Frontend.Services
             return 0;
         }
 
+        public async Task<int> ResetLocalCountAsync()
+        {
+            if (await _localStorage.ContainKeyAsync(TotalKey))
+                await _localStorage.RemoveItemAsync(TotalKey);
+
+            if (await _localStorage.ContainKeyAsync(CurrentKey))
+                await _localStorage.RemoveItemAsync(CurrentKey);
+
+            return 0; 
+        }
         /// <summary>
         /// Læser den akkumulerede tæller fra localStorage og sender den — samt valgfri rating —
         /// til backend for den valgte session. Nulstiller localStorage ved succes.

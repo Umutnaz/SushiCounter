@@ -10,4 +10,5 @@ public interface IParticipantService
     Task<int> AddCountToSessionAsync(int currentCount);
     Task<bool> CommitLocalCountToSessionAsync(string sessionId, string userId, int? rating);
     Task <int> GetCurrentLocalCountAsync();
+    Task<int> ResetLocalCountAsync();
 }

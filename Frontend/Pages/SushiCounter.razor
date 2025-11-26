@@ -20,6 +20,7 @@
     </div>
 
     <div class="btn-row">
+        <button class="btn btn-secondary"@onclick="ResetCount" >Nulstil count</button>
         <button class="btn btn-primary" @onclick="IncrementCount">Click me</button>
         <button class="btn btn-secondary" @onclick="AddToSession">Tilføj til en session</button>
     </div>
@@ -45,7 +46,11 @@
         // Hent eksisterende værdi fra localStorage via servicen
         currentCount = await ParticipantService.GetCurrentLocalCountAsync();
     }
-
+    private async Task ResetCount()
+    {
+        // Nulstil count i localStorage via servicen og opdater UI
+        currentCount = await ParticipantService.ResetLocalCountAsync();
+    }
     private async Task IncrementCount()
     {
         // Gemmer +1 i localStorage via servicen og opdaterer UI med den nye total
