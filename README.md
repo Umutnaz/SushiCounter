@@ -34,7 +34,8 @@ MONGO_DATABASE_NAME=DBNAVN
 ### 🔒 .Env unik?
 * *"&lt;DINCONNECTIONSTRING&gt;"* skal du simpelt hen erstatte med din connection string
 * *"&lt;DBNAVN&gt;"* skal erstattes med din databases navn
-* Det skal skrives som det står herop, uden apostrof "" og uden et semikolon ; til slut
+* Det skal skrives som det står herop, uden apostrof "" og uden &lt; &gt;
+* Så du skal simpelthen, bare erstat teksten med dine egen linjer.. No more, no less
 
 ---
 
