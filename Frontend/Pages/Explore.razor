@@ -1,0 +1,155 @@
+﻿@page "/Explore"
+@inject IUserService UserService
+@inject ISessionService SessionService
+@inject IFriendService FriendService
+@inject NavigationManager NavManager
+
+<PageTitle>Explore</PageTitle>
+
+<div class="explore-container">
+    <h1 class="explore-title">Udforsk venners sessioner 🍣</h1>
+
+    @if (loading)
+    {
+        <p class="loading">Indlæser sessioner...</p>
+    }
+    else if (currentUser is null)
+    {
+        <p>Du skal være logget ind for at udforske.</p>
+    }
+    else if (friendSessions.Count == 0)
+    {
+        <p class="empty-message">Du har ingen venner med sessioner endnu</p>
+    }
+    else
+    {
+        <div class="sessions-feed">
+            @foreach (var session in friendSessions)
+            {
+                <div class="session-card" @onclick="() => OpenSession(session)">
+                    @if (session.Images?.Count > 0)
+                    {
+                        var thumbnail = session.Images.FirstOrDefault(i => i.IsThumbnail) ?? session.Images[0];
+                        <div class="session-thumbnail">
+                            <img src="@GetImageUrl(session.SessionId, thumbnail.Id)" alt="@session.Title" class="thumbnail-image" />
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="session-thumbnail empty">
+                            <div class="empty-placeholder">📷</div>
+                        </div>
+                    }
+
+                    <div class="session-card-content">
+                        <h3 class="session-card-title">@session.Title</h3>
+                        
+                        @if (!string.IsNullOrWhiteSpace(session.RestaurantName))
+                        {
+                            <p class="session-card-restaurant">📍 @session.RestaurantName</p>
+                        }
+
+                        @if (!string.IsNullOrWhiteSpace(session.Description))
+                        {
+                            <p class="session-card-description">@session.Description</p>
+                        }
+
+                        <div class="session-card-meta">
+                            <span class="creator-name">af @GetCreatorName(session.CreatorId)</span>
+                            <span class="date">@session.CreatedAt.ToString("dd/MM/yyyy")</span>
+                        </div>
+
+                        <div class="session-card-footer">
+                            <span class="participant-info">@session.Participants.Count deltagere</span>
+                            @if (session.Images?.Count > 0)
+                            {
+                                <span class="image-info">📷 @session.Images.Count billeder</span>
+                            }
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+</div>
+
+<SessionModal @ref="sessionModal" Visible="@modalVisible" OnCloseRequested="CloseModal" OnSaved="OnSessionSaved" CurrentUserId="@currentUser?.UserId" EditingSession="@selectedSession" />
+
+@code {
+    [CascadingParameter] SessionModal? sessionModal { get; set; }
+    
+    private User? currentUser;
+    private bool loading = true;
+    private bool modalVisible = false;
+    private Session? selectedSession = null;
+
+    private List<Session> friendSessions = new();
+    private Dictionary<string, string> creatorNames = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        loading = true;
+        currentUser = await UserService.GetUserLoggedInAsync();
+
+        if (currentUser is not null)
+        {
+            // Get all friends
+            var friends = await FriendService.GetFriends(currentUser.UserId!);
+            
+            // Get all sessions from friends
+            var allFriendSessions = new List<Session>();
+            foreach (var friend in friends)
+            {
+                var sessions = await SessionService.GetMySessionsAsync(friend.UserId!);
+                allFriendSessions.AddRange(sessions);
+                
+                // Store creator names for display
+                if (!creatorNames.ContainsKey(friend.UserId!))
+                {
+                    creatorNames[friend.UserId!] = friend.Name;
+                }
+            }
+
+            // Sort by newest first (descending date)
+            friendSessions = allFriendSessions
+                .OrderByDescending(s => s.CreatedAt)
+                .ToList();
+        }
+
+        loading = false;
+    }
+
+    private string GetCreatorName(string? creatorId)
+    {
+        if (string.IsNullOrWhiteSpace(creatorId))
+            return "Unknown";
+        
+        return creatorNames.TryGetValue(creatorId, out var name) ? name : "Unknown";
+    }
+
+    private void OpenSession(Session session)
+    {
+        selectedSession = session;
+        modalVisible = true;
+    }
+
+    private Task CloseModal()
+    {
+        modalVisible = false;
+        selectedSession = null;
+        return Task.CompletedTask;
+    }
+
+    private async Task OnSessionSaved()
+    {
+        await CloseModal();
+    }
+
+    private string GetImageUrl(string? sessionId, string? imageId)
+    {
+        if (string.IsNullOrWhiteSpace(sessionId) || string.IsNullOrWhiteSpace(imageId))
+            return "";
+        return $"/api/Sessions/{sessionId}/images/{imageId}";
+    }
+}
+

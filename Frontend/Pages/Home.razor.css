@@ -1,4 +1,4 @@
-﻿.home-container {
+﻿﻿.home-container {
     max-width: 900px;
     margin: 2rem auto;
     padding: 1.5rem;
@@ -21,11 +21,17 @@
     color: #6c757d;
 }
 
+.home-goals {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1.2rem;
+    margin-bottom: 2.5rem;
+}
+
 .home-card {
     background: #f8f9fa;
     border-radius: 0.75rem;
     padding: 1.2rem 1.5rem;
-    margin-bottom: 1.2rem;
     box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
     transition: transform 0.15s ease, box-shadow 0.15s ease;
 }
@@ -48,5 +54,338 @@
 }
 
 .home-card strong {
+    color: #0c63e4;
+    font-weight: 600;
+}
+
+/* My Sessions Section */
+.my-sessions-section {
+    margin-top: 2.5rem;
+    padding-top: 2rem;
+    border-top: 2px solid #e9ecef;
+}
+
+.section-heading {
+    font-size: 1.5rem;
+    color: #212529;
+    margin-bottom: 1.5rem;
+    font-weight: 600;
+}
+
+.empty-message {
+    text-align: center;
+    color: #6c757d;
+    font-style: italic;
+    padding: 2rem;
+}
+
+.sessions-scroll-container {
+    display: flex;
+    flex-direction: column;
+    gap: 0.8rem;
+    max-height: 500px;
+    overflow-y: auto;
+    padding: 0.5rem;
+}
+
+.sessions-scroll-container::-webkit-scrollbar {
+    width: 8px;
+}
+
+.sessions-scroll-container::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 4px;
+}
+
+.sessions-scroll-container::-webkit-scrollbar-thumb {
+    background: #ccc;
+    border-radius: 4px;
+}
+
+.sessions-scroll-container::-webkit-scrollbar-thumb:hover {
+    background: #999;
+}
+
+.session-list-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem 1.2rem;
+    background: #f8f9fa;
+    border: 1px solid #e9ecef;
+    border-radius: 0.5rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.session-list-item:hover {
+    background: #e9ecef;
+    border-color: #0c63e4;
+    box-shadow: 0 2px 8px rgba(12, 99, 228, 0.15);
+}
+
+.session-info {
+    flex: 1;
+}
+
+.session-title {
+    margin: 0;
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #212529;
+}
+
+.session-restaurant {
+    margin: 0.3rem 0 0;
+    font-size: 0.9rem;
+    color: #0c63e4;
+}
+
+.session-date {
+    margin: 0.2rem 0 0;
+    font-size: 0.85rem;
+    color: #6c757d;
+}
+
+.session-meta {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 0.4rem;
+    margin-left: 1rem;
+}
+
+.participant-count {
+    font-size: 0.85rem;
+    color: #6c757d;
+    font-weight: 500;
+}
+
+.image-badge {
+    font-size: 0.8rem;
+    background: #e7f1ff;
+    color: #0b5ed7;
+    padding: 0.2rem 0.6rem;
+    border-radius: 0.25rem;
+    font-weight: 500;
+}
+
+/* ===== MOBILE RESPONSIVE ===== */
+
+/* Tablets and smaller desktops */
+@media (max-width: 1024px) {
+    .home-container {
+        margin: 1.5rem auto;
+        padding: 1.2rem;
+    }
+
+    .home-goals {
+        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+        gap: 1rem;
+    }
+
+    .home-card {
+        padding: 1rem 1.2rem;
+    }
+
+    .home-card h2 {
+        font-size: 1.1rem;
+    }
+
+    .home-card p {
+        font-size: 0.95rem;
+    }
+}
+
+/* Large phones and tablets (481px - 768px) */
+@media (max-width: 768px) {
+    .home-container {
+        max-width: 100%;
+        margin: 0;
+        padding: 1rem;
+        background: transparent;
+        box-shadow: none;
+        border-radius: 0;
+    }
+
+    .home-title {
+        font-size: 1.75rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .home-goals {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 0.8rem;
+        margin-bottom: 2rem;
+    }
+
+    .home-card {
+        padding: 0.9rem 1rem;
+        border-radius: 0.5rem;
+    }
+
+    .home-card h2 {
+        font-size: 1rem;
+        margin-bottom: 0.4rem;
+    }
+
+    .home-card p {
+        font-size: 0.9rem;
+    }
+
+    .my-sessions-section {
+        margin-top: 2rem;
+        padding-top: 1.5rem;
+    }
+
+    .section-heading {
+        font-size: 1.25rem;
+        margin-bottom: 1rem;
+    }
+
+    .sessions-scroll-container {
+        max-height: 400px;
+        gap: 0.6rem;
+        padding: 0.3rem;
+    }
+
+    .session-list-item {
+        padding: 0.8rem 1rem;
+        gap: 0.5rem;
+    }
+
+    .session-title {
+        font-size: 1rem;
+    }
+
+    .session-restaurant {
+        font-size: 0.85rem;
+    }
+
+    .session-meta {
+        gap: 0.3rem;
+        margin-left: 0.5rem;
+    }
+
+    .participant-count,
+    .image-badge {
+        font-size: 0.75rem;
+    }
+}
+
+/* Phones (max 480px) - Like Strava feed */
+@media (max-width: 480px) {
+    .home-container {
+        max-width: 100%;
+        margin: 0;
+        padding: 0;
+        background: transparent;
+        box-shadow: none;
+        border-radius: 0;
+    }
+
+    .home-title {
+        font-size: 1.5rem;
+        margin: 0.75rem 1rem 1rem 1rem;
+    }
+
+    /* Goals in single column */
+    .home-goals {
+        grid-template-columns: 1fr;
+        gap: 0.75rem;
+        padding: 0 0.75rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .home-card {
+        padding: 0.8rem 1rem;
+        border-radius: 0.4rem;
+        border: 1px solid #e9ecef;
+        background: #f9fafc;
+    }
+
+    .home-card:hover {
+        transform: none;
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06);
+    }
+
+    .home-card h2 {
+        font-size: 0.95rem;
+        margin-bottom: 0.3rem;
+        color: #0c63e4;
+    }
+
+    .home-card p {
+        font-size: 0.85rem;
+        margin: 0;
+    }
+
+    .my-sessions-section {
+        margin-top: 1.5rem;
+        padding-top: 1rem;
+        border-top: 1px solid #e9ecef;
+        padding: 0 0.75rem;
+    }
+
+    .section-heading {
+        font-size: 1.15rem;
+        margin: 0.75rem 0 1rem 0;
+    }
+
+    .sessions-scroll-container {
+        max-height: 350px;
+        gap: 0.5rem;
+        padding: 0;
+    }
+
+    .session-list-item {
+        flex-direction: column;
+        align-items: flex-start;
+        padding: 0.75rem;
+        gap: 0.5rem;
+        border-radius: 0.4rem;
+        border: none;
+        background: #f9fafc;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+    }
+
+    .session-list-item:hover {
+        background: #f0f2f5;
+        border-color: transparent;
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+        transform: none;
+    }
+
+    .session-info {
+        width: 100%;
+    }
+
+    .session-title {
+        font-size: 0.95rem;
+        margin: 0 0 0.3rem 0;
+    }
+
+    .session-restaurant {
+        font-size: 0.8rem;
+        margin: 0.1rem 0;
+    }
+
+    .session-date {
+        font-size: 0.75rem;
+    }
+
+    .session-meta {
+        width: 100%;
+        flex-direction: row;
+        gap: 0.6rem;
+        align-items: center;
+        margin-left: 0;
+    }
+
+    .participant-count,
+    .image-badge {
+        font-size: 0.7rem;
+    }
+
     color: #0a58ca;
 }

@@ -349,6 +349,10 @@ textarea.form-control {
     border-radius: 8px;
     overflow: hidden;
     transition: transform 0.2s, box-shadow 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 100px; /* ensure visible area even for very wide images */
 }
 
 .image-card:hover {
@@ -358,9 +362,10 @@ textarea.form-control {
 
 .image-preview {
     width: 100%;
-    height: 100px;
-    object-fit: cover;
+    height: 100%;
+    object-fit: contain; /* show whole image, preserve aspect ratio */
     display: block;
+    max-height: 220px; /* avoid extremely tall images stretching the card too much */
 }
 
 .image-actions {
@@ -534,4 +539,3 @@ textarea.form-control {
         gap: 8px;
     }
 }
-

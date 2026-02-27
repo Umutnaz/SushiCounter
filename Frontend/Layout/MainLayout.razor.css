@@ -87,3 +87,44 @@
 .Btn:active {
     transform: translate(2px ,2px);
 }
+
+/* ===== MOBILE RESPONSIVE ===== */
+
+@media (max-width: 768px) {
+    .top-row {
+        height: 3.25rem;
+        padding: 0 0.75rem;
+    }
+
+    .brand {
+        font-size: 0.95rem;
+    }
+
+    .content {
+        padding: 0.75rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .top-row {
+        height: 3rem;
+        padding: 0 0.5rem;
+    }
+
+    .brand {
+        font-size: 0.85rem;
+    }
+
+    .content {
+        padding: 0;
+    }
+
+    .Btn {
+        width: 40px;
+        height: 40px;
+    }
+
+    .Btn:hover {
+        width: 110px;
+    }
+}

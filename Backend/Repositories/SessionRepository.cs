@@ -1,4 +1,4 @@
-﻿// SessionRepository: Responsible for all database operations related to Session documents
+﻿﻿// SessionRepository: Responsible for all database operations related to Session documents
 // - Encapsulates MongoDB queries/updates against the Sessions collection
 // - Manages GridFS uploads/downloads/deletes for session images
 // - Implements simple thumbnail promotion logic when images are removed
@@ -10,6 +10,7 @@ using MongoDB.Bson;
 using MongoDB.Driver;
 using MongoDB.Driver.GridFS;
 using System.IO;
+using Microsoft.Extensions.Logging;
 
 namespace Backend.Repositories;
 
@@ -17,14 +18,16 @@ public class SessionRepository : ISessionRepository
 {
     private readonly IMongoCollection<Session> _sessions;
     private readonly GridFSBucket _bucket;
+    private readonly ILogger<SessionRepository>? _logger;
 
-    public SessionRepository(IMongoClient client)
+    public SessionRepository(IMongoClient client, ILogger<SessionRepository>? logger = null)
     {
         var databaseName = Environment.GetEnvironmentVariable("MONGO_DATABASE_NAME")
                            ?? throw new InvalidOperationException("MONGO_DATABASE_NAME is not set.");
         var db = client.GetDatabase(databaseName);
         _sessions = db.GetCollection<Session>("Sessions");
         _bucket = new GridFSBucket(db);
+        _logger = logger;
     }
 
     public async Task<List<Session>> GetMineAsync(string userId)
@@ -99,6 +102,7 @@ public class SessionRepository : ISessionRepository
 
     public async Task<ImageRef?> UploadImageAsync(string sessionId, string fileName, Stream stream, string contentType, string? uploadedBy)
     {
+        _logger?.LogInformation("Repository UploadImageAsync called for session {sessionId} filename={fileName} contentType={contentType}", sessionId, fileName, contentType);
         var session = await GetByIdAsync(sessionId);
         if (session is null) return null;
 
@@ -123,24 +127,31 @@ public class SessionRepository : ISessionRepository
         };
 
         await _sessions.UpdateOneAsync(s => s.SessionId == sessionId, Builders<Session>.Update.Push(s => s.Images, imageRef));
+        _logger?.LogInformation("Repository UploadImageAsync stored file {fileId} for session {sessionId}", fileId, sessionId);
         return imageRef;
     }
 
     public async Task<(Stream Stream, string ContentType, string FileName)> DownloadImageAsync(string fileId)
     {
+        _logger?.LogInformation("Repository DownloadImageAsync called for fileId={fileId}", fileId);
         var oid = ObjectId.Parse(fileId);
         var info = await _bucket.Find(Builders<GridFSFileInfo>.Filter.Eq(f => f.Id, oid)).FirstOrDefaultAsync();
-        if (info is null) throw new FileNotFoundException();
+        if (info is null) {
+            _logger?.LogWarning("Repository DownloadImageAsync: GridFS info not found for {fileId}", fileId);
+            throw new FileNotFoundException();
+        }
 
         var ms = new MemoryStream();
         await _bucket.DownloadToStreamAsync(oid, ms);
         ms.Position = 0;
         var ct = info.Metadata != null && info.Metadata.Contains("contentType") ? info.Metadata["contentType"].AsString : "application/octet-stream";
+        _logger?.LogInformation("Repository DownloadImageAsync returning file {fileId} contentType={ct}", fileId, ct);
         return (ms, ct, info.Filename);
     }
 
     public async Task<bool> DeleteImageAsync(string sessionId, string imageId)
     {
+        _logger?.LogInformation("Repository DeleteImageAsync called for session {sessionId} imageId={imageId}", sessionId, imageId);
         var session = await GetByIdAsync(sessionId);
         if (session is null) return false;
 
@@ -173,11 +184,13 @@ public class SessionRepository : ISessionRepository
             }
         }
 
+        _logger?.LogInformation("Repository DeleteImageAsync removed image {imageId} for session {sessionId}", imageId, sessionId);
         return true;
     }
 
     public async Task<bool> SetImageThumbnailAsync(string sessionId, string imageId)
     {
+        _logger?.LogInformation("Repository SetImageThumbnailAsync called for session {sessionId} imageId={imageId}", sessionId, imageId);
         var session = await GetByIdAsync(sessionId);
         if (session is null) return false;
 
@@ -192,6 +205,7 @@ public class SessionRepository : ISessionRepository
         }
 
         await _sessions.UpdateOneAsync(Builders<Session>.Filter.Eq(s => s.SessionId, sessionId), Builders<Session>.Update.Set(s => s.Images, images));
+        _logger?.LogInformation("Repository SetImageThumbnailAsync set image {imageId} as thumbnail for session {sessionId}", imageId, sessionId);
         return true;
     }
 }

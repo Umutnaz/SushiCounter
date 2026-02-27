@@ -98,6 +98,22 @@
 }
 .side-menu.open{ left:0; }
 
+/* Mobile: menu fylder mere af skærmen */
+@media (max-width: 768px) {
+    .side-menu {
+        width: 75vw;
+        left: -75vw;
+    }
+}
+
+@media (max-width: 480px) {
+    .side-menu {
+        width: 85vw;
+        left: -85vw;
+        padding-top: 3.5rem;
+    }
+}
+
 /* Backdrop klik-luk */
 .backdrop{
     position:fixed;

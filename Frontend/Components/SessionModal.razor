@@ -461,7 +461,8 @@
     {
         if (string.IsNullOrWhiteSpace(sessionId) || string.IsNullOrWhiteSpace(imageId))
             return "";
-        return $"{NavManager.BaseUri}api/Sessions/{sessionId}/images/{imageId}";
+        // Use a root-relative URL so it works regardless of BaseUri and avoids double-slash issues
+        return $"/api/Sessions/{sessionId}/images/{imageId}";
     }
 }
 

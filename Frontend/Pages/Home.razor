@@ -2,8 +2,9 @@
 @inject IUserService UserService
 @inject ISessionService SessionService
 @inject IFriendService FriendService
+@inject NavigationManager NavManager
 
-<PageTitle>Home</PageTitle>
+<PageTitle>My Sessions</PageTitle>
 
 <div class="home-container">
     <h1 class="home-title">Velkommen til SushiTracker 🍣</h1>
@@ -18,48 +19,93 @@
     }
     else
     {
-        <div class="home-card">
-            <h2>Seneste session</h2>
-            @if (latestSession == null)
+        <!-- Goals Section -->
+        <div class="home-goals">
+            <div class="home-card">
+                <h2>Seneste session</h2>
+                @if (latestSession == null)
+                {
+                    <p>Ingen sessioner endnu</p>
+                }
+                else if (latestSession.RestaurantName == null)
+                {
+                    <p>@latestSession.Title</p>
+                }
+                else
+                {
+                    <p>@latestSession.Title på @latestSession.RestaurantName</p>
+                }
+            </div>
+
+            <div class="home-card">
+                <h2>Session hvor du spiste mest sushi</h2>
+                <p>@(topSession is not null ? $"{topSession.Title} – {topCount} stk." : "Ingen data endnu")</p>
+            </div>
+
+            <div class="home-card">
+                <h2>Din samlede sushi count</h2>
+                <p>@totalCount stk.</p>
+            </div>
+
+            <div class="home-card">
+                <h2>Højst ratede sushi sted</h2>
+                <p>@(bestRated is not null ? $"{bestRated.RestaurantName} – {bestRated.Rating}/10" : "Ingen rating endnu")</p>
+            </div>
+
+            <div class="home-card">
+                <h2>Af dine venner har <strong>@(friendTopName ?? "-")</strong> spist flest på én session</h2>
+                <p>@(friendTopCount > 0 ? $"{friendTopCount} stk." : "Ingen data endnu")</p>
+            </div>
+        </div>
+
+        <!-- My Sessions List Section -->
+        <div class="my-sessions-section">
+            <h2 class="section-heading">Mine sessioner</h2>
+            @if (mySessions.Count == 0)
             {
-                <p>Ingen sessioner endnu</p>
-            }
-            else if (latestSession.RestaurantName == null)
-            {
-                <p>@latestSession.Title</p>
+                <p class="empty-message">Du har ingen sessioner endnu</p>
             }
             else
             {
-                <p>@latestSession.Title + " på " + @latestSession.RestaurantName</p>
+                <div class="sessions-scroll-container">
+                    @foreach (var session in mySessions)
+                    {
+                        <div class="session-list-item" @onclick="() => OpenSession(session)">
+                            <div class="session-info">
+                                <h3 class="session-title">@session.Title</h3>
+                                @if (!string.IsNullOrWhiteSpace(session.RestaurantName))
+                                {
+                                    <p class="session-restaurant">@session.RestaurantName</p>
+                                }
+                                <p class="session-date">@session.CreatedAt.ToString("dd/MM/yyyy")</p>
+                            </div>
+                            <div class="session-meta">
+                                <span class="participant-count">@session.Participants.Count deltagere</span>
+                                @if (session.Images?.Count > 0)
+                                {
+                                    <span class="image-badge">📷 @session.Images.Count</span>
+                                }
+                            </div>
+                        </div>
+                    }
+                </div>
             }
-        </div>
-
-        <div class="home-card">
-            <h2>Session hvor du spiste mest sushi</h2>
-            <p>@(topSession is not null ? $"{topSession.Title} – {topCount} stk." : "Ingen data endnu")</p>
-        </div>
-
-        <div class="home-card">
-            <h2>Din samlede sushi count</h2>
-            <p>@totalCount stk.</p>
-        </div>
-
-        <div class="home-card">
-            <h2>Højst ratede sushi sted</h2>
-            <p>@(bestRated is not null ? $"{bestRated.RestaurantName} – {bestRated.Rating}/10" : "Ingen rating endnu")</p>
-        </div>
-
-        <div class="home-card">
-            <h2>Af dine venner har <strong>@(friendTopName ?? "-")</strong> spist flest på én session</h2>
-            <p>@(friendTopCount > 0 ? $"{friendTopCount} stk." : "Ingen data endnu")</p>
         </div>
     }
 </div>
 
+<SessionModal @ref="sessionModal" Visible="@modalVisible" OnCloseRequested="CloseModal" OnSaved="OnSessionSaved" CurrentUserId="@currentUser?.UserId" EditingSession="@selectedSession" />
+
 @code {
+    [CascadingParameter] SessionModal? sessionModal { get; set; }
+    
     private User? currentUser;
     private bool loading = true;
+    private bool modalVisible = false;
+    private Session? selectedSession = null;
 
+    private List<Session> mySessions = new();
+    
     private Session? latestSession;
     private Session? topSession;
     private int topCount;
@@ -75,8 +121,10 @@
 
         if (currentUser is not null)
         {
-            // Hent alle sessioner hvor brugeren deltager
+            // Hent alle sessioner hvor brugeren deltager (ejet + deltaget i)
             var sessions = await SessionService.GetMySessionsAsync(currentUser.UserId!);
+            mySessions = sessions.OrderByDescending(s => s.CreatedAt).ToList();
+            
             if (sessions.Count > 0)
             {
                 // Seneste session
@@ -127,5 +175,30 @@
         }
 
         loading = false;
+    }
+
+    private void OpenSession(Session session)
+    {
+        selectedSession = session;
+        modalVisible = true;
+    }
+
+    private Task CloseModal()
+    {
+        modalVisible = false;
+        selectedSession = null;
+        return Task.CompletedTask;
+    }
+
+    private async Task OnSessionSaved()
+    {
+        await CloseModal();
+        // Reload sessions
+        if (currentUser is not null)
+        {
+            var sessions = await SessionService.GetMySessionsAsync(currentUser.UserId!);
+            mySessions = sessions.OrderByDescending(s => s.CreatedAt).ToList();
+            StateHasChanged();
+        }
     }
 }
