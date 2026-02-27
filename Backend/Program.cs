@@ -81,5 +81,5 @@ app.UseCors("AllowFrontend");
 app.UseAuthorization();
 
 app.MapControllers();
-
+app.MapGet("/", () => "SushiCounter API is running");
 app.Run();
