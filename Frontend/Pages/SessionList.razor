@@ -2,6 +2,7 @@
 
 @inject ISessionService SessionService
 @inject IUserService UserService
+@inject NavigationManager NavManager
 
 <PageTitle>Mine sessions</PageTitle>
 
@@ -32,6 +33,11 @@ else
         {
             <div class="session-card" @onclick="() => OpenEditModal(s)">
                 <div class="session-card-top">
+                    @if (s.Images is not null && s.Images.Count > 0)
+                    {
+                        var thumb = s.Images.FirstOrDefault(i => i.IsThumbnail) ?? s.Images.First();
+                        <img src="@($"{NavManager.BaseUri}api/Sessions/{s.SessionId}/images/{thumb.Id}")" alt="thumbnail" style="width:80px;height:60px;object-fit:cover;margin-right:8px;" />
+                    }
                     <h3>@s.Title</h3>
                     <span class="badge @(s.IsActive ? "badge-open" : "badge-closed")">
                         @(s.IsActive ? "Åben" : "Lukket")
@@ -58,18 +64,18 @@ else
     </div>
 }
 
-<CreateSession Visible="@modalVisible"
-               CurrentUserId="@currentUser?.UserId"
-               EditingSession="@editing"
-               OnCloseRequested="@(() => modalVisible = false)"
-               OnSaved="OnSaved" />
+<SessionModal Visible="@modalVisible"
+             CurrentUserId="@currentUser?.UserId"
+             EditingSession="@editingSession"
+             OnCloseRequested="@(() => modalVisible = false)"
+             OnSaved="OnSaved" />
 
 @code {
     private bool loading = true;
     private User? currentUser;
     private List<Session> mySessions = new();
     private bool modalVisible = false;
-    private Session? editing;
+    private Session? editingSession;
 
     protected override async Task OnInitializedAsync()
     {
@@ -93,14 +99,13 @@ else
 
     private void OpenCreateModal()
     {
-        editing = null;          // create-mode
+        editingSession = null;  // null = create mode
         modalVisible = true;
     }
 
     private void OpenEditModal(Session s)
     {
-        // shallow copy til redigering i modal
-        editing = new Session
+        editingSession = new Session
         {
             SessionId = s.SessionId,
             Title = s.Title,
@@ -111,7 +116,8 @@ else
             IsActive = s.IsActive,
             Participants = s.Participants?.Select(p => new Participant { UserId = p.UserId, Count = p.Count, Rating = p.Rating }).ToList() ?? new(),
             TotalCount = s.TotalCount,
-            Rating = s.Rating
+            Rating = s.Rating,
+            Images = s.Images
         };
         modalVisible = true;
     }
@@ -119,6 +125,14 @@ else
     private async Task OnSaved()
     {
         modalVisible = false;
+        editingSession = null;
         await LoadSessionsAsync();
+    }
+
+    private string GetImageUrl(string? sessionId, string? imageId)
+    {
+        if (string.IsNullOrWhiteSpace(sessionId) || string.IsNullOrWhiteSpace(imageId))
+            return "";
+        return $"{NavManager.BaseUri}api/Sessions/{sessionId}/images/{imageId}";
     }
 }

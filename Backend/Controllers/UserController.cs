@@ -1,9 +1,6 @@
-﻿using System.Text.RegularExpressions;
+﻿using Backend.Repositories.IRepository;
 using Core;
 using Microsoft.AspNetCore.Mvc;
-using MongoDB.Bson;
-using MongoDB.Driver;
-using Backend; //hashed fil
 
 namespace Backend.Controllers;
 
@@ -11,42 +8,25 @@ namespace Backend.Controllers;
 [Route("api/[controller]")] // -> "api/Users"
 public class UsersController : ControllerBase
 {
-    private readonly IMongoCollection<User> _users;
+    private readonly IUserRepository _repo;
 
-    // Skift evt. disse tre værdier til appsettings.json + DI, når du vil rydde op
-    private const string UsersCollection = "Users";
-
-    public UsersController()
+    public UsersController(IUserRepository repo)
     {
-        var connectionString = Environment.GetEnvironmentVariable("MONGO_CONNECTION_STRING")
-                               ?? throw new InvalidOperationException("MONGO_CONNECTION_STRING is not set.");
-        var databaseName = Environment.GetEnvironmentVariable("MONGO_DATABASE_NAME")
-                           ?? throw new InvalidOperationException("MONGO_DATABASE_NAME is not set.");
-
-        var client = new MongoClient(connectionString);
-        var db = client.GetDatabase(databaseName);
-        _users = db.GetCollection<User>(UsersCollection);
-
-        // Sørg for unikke indeks på Email og Name
-        var indexKeys = Builders<User>.IndexKeys;
-        var emailIndex = new CreateIndexModel<User>(indexKeys.Ascending(u => u.Email),
-            new CreateIndexOptions { Unique = true, Name = "ux_users_email" });
-        var nameIndex = new CreateIndexModel<User>(indexKeys.Ascending(u => u.Name),
-            new CreateIndexOptions { Unique = true, Name = "ux_users_name" });
-        _users.Indexes.CreateMany(new[] { emailIndex, nameIndex });
+        _repo = repo;
     }
 
     // GET: api/Users
     [HttpGet]
     public async Task<ActionResult<IEnumerable<User>>> GetAll()
     {
-        var list = await _users.Find(_ => true).ToListAsync();
+        var list = await _repo.GetAllAsync();
         return Ok(list);
     }
-// GET: api/Users/login/{email}/{password}
-//email er case-insensitive
-// password er case-sensitive
-// brugernavn er ikke med i login, derfor ligemeget.. skal man ændre det gør man det bare i profilen (mypage)
+
+    // GET: api/Users/login/{email}/{password}
+    //email er case-insensitive
+    // password er case-sensitive
+    // brugernavn er ikke med i login, derfor ligemeget.. skal man ændre det gør man det bare i profilen (mypage)
     [HttpGet("login/{email}/{password}")]
     public async Task<ActionResult<User>> Login(string email, string password)
     {
@@ -56,25 +36,13 @@ public class UsersController : ControllerBase
         var hashedInputPassword = PasswordHasherLinearProbing.Hash(password);
 
         // 2) Nu sammenligner vi den hash, vi lige har regnet, med hash-værdien i databasen.
-        var filter = Builders<User>.Filter.And(
-            // Password gemmes i DB som hash (kun tal i en streng),
-            // så vi søger på den hash-værdi:
-            Builders<User>.Filter.Eq(u => u.Password, hashedInputPassword),
-
-            // Email er case-insensitive altså at alt bliver småt
-            Builders<User>.Filter.Regex(
-                u => u.Email,
-                new MongoDB.Bson.BsonRegularExpression($"^{Regex.Escape(email)}$", "i")
-            )
-        );
-
-        var user = await _users.Find(filter).FirstOrDefaultAsync();
+        var user = await _repo.FindByEmailAndPasswordHashAsync(email, hashedInputPassword);
         if (user is null) return NotFound();
 
         return Ok(user);
     }
 
-// POST: api/Users/opret
+    // POST: api/Users/opret
     [HttpPost("opret")]
     public async Task<ActionResult<User>> Opret([FromBody] User input)
     {
@@ -91,7 +59,6 @@ public class UsersController : ControllerBase
         // 2) Vi laver hash → output er en streng bestående kun af tal,
         //    to cifre pr. tegn i det oprindelige password.
         var hashedPassword = PasswordHasherLinearProbing.Hash(input.Password.Trim());
-
         var now = DateTime.UtcNow;
 
         var newUser = new User
@@ -107,11 +74,11 @@ public class UsersController : ControllerBase
 
         try
         {
-            await _users.InsertOneAsync(newUser);
+            var created = await _repo.CreateAsync(newUser);
             // Efter insert har newUser.UserId fået ObjectId som string
-            return CreatedAtAction(nameof(GetById), new { userId = newUser.UserId }, newUser);
+            return CreatedAtAction(nameof(GetById), new { userId = created.UserId }, created);
         }
-        catch (MongoWriteException mwx) when (mwx.WriteError?.Category == ServerErrorCategory.DuplicateKey)
+        catch (MongoDB.Driver.MongoWriteException mwx) when (mwx.WriteError?.Category == MongoDB.Driver.ServerErrorCategory.DuplicateKey)
         {
             // Unik constraint rammer – find hvilken
             if (mwx.Message.Contains("ux_users_email", StringComparison.OrdinalIgnoreCase))
@@ -131,31 +98,15 @@ public class UsersController : ControllerBase
         if (updated is null || string.IsNullOrWhiteSpace(updated.UserId))
             return BadRequest("UserId mangler.");
 
-        var filter = Builders<User>.Filter.Eq(u => u.UserId, updated.UserId);
-        var update = Builders<User>.Update
-            .Set(u => u.Name, updated.Name)
-            .Set(u => u.Email, updated.Email.ToLowerInvariant())
-            .Set(u => u.UpdatedAt, DateTime.UtcNow);
-// hashing af password håndteres her(under update funktionen):
         if (!string.IsNullOrWhiteSpace(updated.Password))
         {
             var hashedPassword = PasswordHasherLinearProbing.Hash(updated.Password.Trim());
-            update = update.Set(u => u.Password, hashedPassword);
+            updated.Password = hashedPassword;
         }
-        try
-        {
-            var result = await _users.UpdateOneAsync(filter, update);
-            if (result.MatchedCount == 0) return NotFound();
-            return NoContent();
-        }
-        catch (MongoWriteException mwx) when (mwx.WriteError?.Category == ServerErrorCategory.DuplicateKey)
-        {
-            if (mwx.Message.Contains("ux_users_email", StringComparison.OrdinalIgnoreCase))
-                return Conflict("Email findes allerede.");
-            if (mwx.Message.Contains("ux_users_name", StringComparison.OrdinalIgnoreCase))
-                return Conflict("Brugernavn findes allerede.");
-            return Conflict("Unikhedsfejl.");
-        }
+
+        var ok = await _repo.UpdateAsync(updated);
+        if (!ok) return NotFound();
+        return NoContent();
     }
 
     // GET: api/Users/user/{userId} bruges fra service men fra controllerens opret funk
@@ -163,7 +114,7 @@ public class UsersController : ControllerBase
     public async Task<ActionResult<User>> GetById(string userId)
     {
         if (string.IsNullOrWhiteSpace(userId)) return BadRequest("userId mangler.");
-        var user = await _users.Find(u => u.UserId == userId).FirstOrDefaultAsync();
+        var user = await _repo.GetByIdAsync(userId);
         if (user is null) return NotFound();
         return Ok(user);
     }
@@ -173,8 +124,8 @@ public class UsersController : ControllerBase
     public async Task<IActionResult> Delete(string userId)
     {
         if (string.IsNullOrWhiteSpace(userId)) return BadRequest("userId mangler.");
-        var result = await _users.DeleteOneAsync(u => u.UserId == userId);
-        if (result.DeletedCount == 0) return NotFound();
+        var ok = await _repo.DeleteAsync(userId);
+        if (!ok) return NotFound();
         return NoContent();
     }
 }

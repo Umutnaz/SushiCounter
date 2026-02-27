@@ -1,0 +1,467 @@
+﻿@inject IFriendService FriendService
+@inject ISessionService SessionService
+@inject IParticipantService ParticipantService
+@inject HttpClient Http
+@inject NavigationManager NavManager
+
+@if (Visible)
+{
+    <div class="modal-backdrop" @onclick="Close">
+        <div class="modal-content" @onclick:stopPropagation>
+            <div class="modal-header">
+                <h3 class="modal-title">
+                    @if (isEdit)
+                    {
+                        @if (owner) { <text>Rediger session</text> }
+                        else { <text>Se session</text> }
+                    }
+                    else
+                    {
+                        <text>Opret ny session</text>
+                    }
+                </h3>
+                <button class="close-btn" @onclick="Close">×</button>
+            </div>
+
+            <div class="modal-body">
+                @if (!string.IsNullOrWhiteSpace(error))
+                {
+                    <div class="alert alert-error">@error</div>
+                }
+
+                <div class="form-section">
+                    @* Titel *@
+                    <div class="form-group">
+                        <label class="form-label">
+                            Titel
+                            <span class="required">*</span>
+                        </label>
+                        @if (isEdit && !owner)
+                        {
+                            <div class="form-value">@title</div>
+                        }
+                        else
+                        {
+                            <input type="text" class="form-control" @bind="title" placeholder="Fx Sushi aften hos Atami Herning" />
+                        }
+                    </div>
+
+                    @* Restaurant *@
+                    <div class="form-group">
+                        <label class="form-label">Restaurant</label>
+                        @if (isEdit && !owner)
+                        {
+                            <div class="form-value">@(string.IsNullOrWhiteSpace(restaurant) ? "—" : restaurant)</div>
+                        }
+                        else
+                        {
+                            <input type="text" class="form-control" @bind="restaurant" placeholder="Fx A+ Siam" />
+                        }
+                    </div>
+
+                    @* Beskrivelse *@
+                    <div class="form-group">
+                        <label class="form-label">Beskrivelse</label>
+                        @if (isEdit && !owner)
+                        {
+                            <div class="form-value multi-line">@(string.IsNullOrWhiteSpace(description) ? "—" : description)</div>
+                        }
+                        else
+                        {
+                            <textarea class="form-control" @bind="description" rows="3" placeholder="Tilvalgt indhold..."></textarea>
+                        }
+                    </div>
+
+                    @* Status (kun for ejer ved edit) *@
+                    @if (isEdit && owner)
+                    {
+                        <div class="form-group">
+                            <label class="form-label">Status</label>
+                            <div class="toggle-group">
+                                <label class="toggle-switch">
+                                    <input type="checkbox" @bind="isActive" />
+                                    <span class="toggle-slider"></span>
+                                </label>
+                                <span class="toggle-label">@(isActive ? "Åben" : "Lukket")</span>
+                            </div>
+                        </div>
+                    }
+                </div>
+
+                @* Deltagere *@
+                <div class="form-section">
+                    <h4 class="section-title">Deltagere</h4>
+
+                    @if (isEdit && owner)
+                    {
+                        <div class="participants-selector">
+                            <div class="info-text">Du (ejer) er altid med.</div>
+
+                            @if (friendsLoading)
+                            {
+                                <div class="loading-text">Henter venner…</div>
+                            }
+                            else if (friends.Count == 0)
+                            {
+                                <div class="empty-text">Du har ingen venner endnu.</div>
+                            }
+                            else
+                            {
+                                <div class="friend-list">
+                                    @foreach (var f in friends)
+                                    {
+                                        <label class="friend-item">
+                                            <input type="checkbox" 
+                                                   checked="@IsSelected(f.UserId!)"
+                                                   @onchange="(e)=>ToggleSelect(f.UserId!, ((ChangeEventArgs)e).Value)" />
+                                            <span>@f.Name</span>
+                                        </label>
+                                    }
+                                </div>
+                            }
+
+                            @if (EditingSession?.Participants?.Any(p => p.UserId != CurrentUserId) == true)
+                            {
+                                <button class="btn btn-sm btn-outline-danger" @onclick="RemoveAllExceptOwner" disabled="@isSaving">
+                                    Fjern alle (undtagen mig)
+                                </button>
+                            }
+                        </div>
+                    }
+                    else if (isEdit && !owner)
+                    {
+                        <div class="info-text">Du kan ikke redigere deltagere som ikke-ejer.</div>
+                    }
+
+                    @* Deltager oversigt *@
+                    <div class="participants-list">
+                        @if (CurrentParticipants.Any())
+                        {
+                            @foreach (var p in CurrentParticipants)
+                            {
+                                <div class="participant-item">
+                                    <div class="participant-name">
+                                        @DisplayName(p.Id)
+                                        @if (p.Id == CurrentUserId) { <span class="badge badge-you">dig</span> }
+                                        @if (EditingSession?.CreatorId == p.Id) { <span class="badge badge-owner">ejer</span> }
+                                    </div>
+                                    <div class="participant-count">🍣 @p.Count</div>
+                                </div>
+                            }
+                        }
+                        else
+                        {
+                            <div class="empty-text">Ingen deltagere.</div>
+                        }
+                    </div>
+                </div>
+
+                @* Billeder (kun ved edit) *@
+                @if (isEdit)
+                {
+                    <div class="form-section">
+                        <h4 class="section-title">Billeder</h4>
+
+                        @if (EditingSession?.Images?.Count > 0)
+                        {
+                            <div class="image-gallery">
+                                @foreach (var img in EditingSession.Images)
+                                {
+                                    <div class="image-card">
+                                        <img src="@GetImageUrl(EditingSession.SessionId, img.Id)" 
+                                             alt="@img.FileName" 
+                                             class="image-preview" />
+                                        @if (owner)
+                                        {
+                                            <div class="image-actions">
+                                                @if (img.IsThumbnail)
+                                                {
+                                                    <span class="badge badge-primary">Thumb</span>
+                                                }
+                                                else
+                                                {
+                                                    <button class="btn btn-sm btn-secondary" @onclick="() => SetThumbnail(img.Id)">Thumb</button>
+                                                }
+                                                <button class="btn btn-sm btn-danger" @onclick="() => DeleteImage(img.Id)">Slet</button>
+                                            </div>
+                                        }
+                                    </div>
+                                }
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="empty-text">Ingen billeder endnu.</div>
+                        }
+
+                        @if (owner)
+                        {
+                            <div class="image-upload">
+                                <InputFile OnChange="OnImageSelected" accept="image/*" class="file-input" />
+                                <button class="btn btn-primary" @onclick="UploadImage" disabled="@(selectedImage==null || isUploading)">
+                                    @if (isUploading) { <text>Uploader…</text> }
+                                    else { <text>Upload billede</text> }
+                                </button>
+                                @if (!string.IsNullOrEmpty(uploadError))
+                                {
+                                    <div class="error-text">@uploadError</div>
+                                }
+                            </div>
+                        }
+                    </div>
+                }
+            </div>
+
+            @* Modal footer *@
+            <div class="modal-footer">
+                @if (isEdit && owner)
+                {
+                    <button class="btn btn-danger" @onclick="DeleteSession" disabled="@isSaving">Slet session</button>
+                    <div class="btn-group">
+                        <button class="btn btn-secondary" @onclick="Close" disabled="@isSaving">Annullér</button>
+                        <button class="btn btn-primary" @onclick="Save" disabled="@isSaving">Gem ændringer</button>
+                    </div>
+                }
+                else if (isEdit && !owner)
+                {
+                    <div class="btn-group">
+                        @if (CanRemoveSelf())
+                        {
+                            <button class="btn btn-outline-danger" @onclick="RemoveSelf" disabled="@isSaving">Fjern mig</button>
+                        }
+                        <button class="btn btn-primary" @onclick="Close">Luk</button>
+                    </div>
+                }
+                else
+                {
+                    <div class="btn-group">
+                        <button class="btn btn-secondary" @onclick="Close" disabled="@isSaving">Annullér</button>
+                        <button class="btn btn-primary" @onclick="Save" disabled="@isSaving">Opret</button>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter] public bool Visible { get; set; }
+    [Parameter] public EventCallback OnCloseRequested { get; set; }
+    [Parameter] public EventCallback OnSaved { get; set; }
+    [Parameter] public string? CurrentUserId { get; set; }
+    [Parameter] public Core.Session? EditingSession { get; set; }
+
+    private bool isEdit => EditingSession is not null;
+    private bool owner = false;
+
+    private string title = "";
+    private string? restaurant;
+    private string? description;
+    private bool isActive = true;
+
+    private List<Core.User> friends = new();
+    private bool friendsLoading = true;
+    private Dictionary<string, bool> selected = new();
+    private bool isSaving = false;
+    private string? error;
+
+    private IBrowserFile? selectedImage;
+    private bool isUploading = false;
+    private string? uploadError;
+
+    private readonly Dictionary<string, string> friendNames = new();
+
+    private sealed class ParticipantRow { public string Id { get; set; } = ""; public int Count { get; set; } }
+    private List<ParticipantRow> CurrentParticipants => EditingSession?.Participants is not null 
+        ? EditingSession.Participants.Where(p => !string.IsNullOrWhiteSpace(p.UserId))
+            .Select(p => new ParticipantRow { Id = p.UserId!, Count = Math.Max(0, p.Count) })
+            .OrderByDescending(x => x.Count).ThenBy(x => DisplayName(x.Id)).ToList()
+        : new();
+
+    private string DisplayName(string id) => id == CurrentUserId ? "Du" : friendNames.TryGetValue(id, out var n) ? n : id;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (EditingSession is null) { owner = false; return; }
+        owner = !string.IsNullOrWhiteSpace(EditingSession.CreatorId) && EditingSession.CreatorId == CurrentUserId;
+        title = EditingSession.Title;
+        restaurant = EditingSession.RestaurantName;
+        description = EditingSession.Description;
+        isActive = EditingSession.IsActive;
+
+        friendsLoading = true; friends.Clear(); selected.Clear(); friendNames.Clear();
+        if (!string.IsNullOrWhiteSpace(CurrentUserId))
+        {
+            try { friends = await FriendService.GetFriends(CurrentUserId!); }
+            catch { friends = new(); }
+        }
+        foreach (var f in friends)
+            if (!string.IsNullOrWhiteSpace(f.UserId)) friendNames[f.UserId!] = f.Name;
+        friendsLoading = false;
+
+        var existingIds = EditingSession.Participants?.Select(p => p.UserId).ToHashSet() ?? new();
+        foreach (var f in friends) selected[f.UserId!] = existingIds.Contains(f.UserId!);
+    }
+
+    private bool IsSelected(string id) => selected.TryGetValue(id, out var v) && v;
+    private void ToggleSelect(string id, object? val)
+    {
+        var on = val is bool b ? b : val is string s && bool.TryParse(s, out var b2) && b2;
+        selected[id] = on;
+    }
+    private Task Close() => OnCloseRequested.InvokeAsync();
+    private bool CanRemoveSelf() => EditingSession?.Participants?.Any(p => p.UserId == CurrentUserId) == true;
+
+    private async Task RemoveSelf()
+    {
+        if (string.IsNullOrWhiteSpace(CurrentUserId) || EditingSession?.SessionId is null) return;
+        isSaving = true;
+        try { await ParticipantService.RemoveParticipantAsync(EditingSession.SessionId!, CurrentUserId!); await OnSaved.InvokeAsync(); }
+        catch (Exception ex) { error = ex.Message; }
+        finally { isSaving = false; }
+    }
+
+    private async Task RemoveAllExceptOwner()
+    {
+        if (!owner || EditingSession?.SessionId is null) return;
+        isSaving = true;
+        try
+        {
+            var others = EditingSession!.Participants?.Where(p => p.UserId != CurrentUserId).Select(p => p.UserId!).ToList() ?? new();
+            foreach (var uid in others) await ParticipantService.RemoveParticipantAsync(EditingSession.SessionId!, uid);
+            await OnSaved.InvokeAsync();
+        }
+        catch (Exception ex) { error = ex.Message; }
+        finally { isSaving = false; }
+    }
+
+    private async Task DeleteSession()
+    {
+        if (!owner || EditingSession?.SessionId is null) return;
+        isSaving = true;
+        try
+        {
+            var ok = await SessionService.DeleteSessionAsync(EditingSession.SessionId!);
+            if (!ok) { error = "Kunne ikke slette sessionen."; return; }
+            await OnSaved.InvokeAsync();
+        }
+        catch (Exception ex) { error = ex.Message; }
+        finally { isSaving = false; }
+    }
+
+    private async Task Save()
+    {
+        error = null;
+        if (isEdit && !owner) { error = "Du kan ikke redigere denne session."; return; }
+        if (string.IsNullOrWhiteSpace(title)) { error = "Du skal tilføje en titel til sessionen."; return; }
+        if (string.IsNullOrWhiteSpace(CurrentUserId)) { error = "Manglende data."; return; }
+
+        isSaving = true;
+        try
+        {
+            if (isEdit)
+            {
+                var s = EditingSession!;
+                s.Title = title.Trim();
+                s.RestaurantName = string.IsNullOrWhiteSpace(restaurant) ? null : restaurant!.Trim();
+                s.Description = string.IsNullOrWhiteSpace(description) ? null : description!.Trim();
+                s.IsActive = isActive;
+
+                var ok = await SessionService.UpdateSessionAsync(s);
+                if (!ok) { error = "Kunne ikke gemme ændringer."; return; }
+
+                var existing = s.Participants?.Select(p => p.UserId!).ToHashSet() ?? new();
+                existing.Add(CurrentUserId!);
+                var nowSelected = selected.Where(kv => kv.Value).Select(kv => kv.Key).ToHashSet();
+                var toAdd = nowSelected.Except(existing).ToList();
+                var toRemove = existing.Where(id => id != CurrentUserId).Except(nowSelected).ToList();
+
+                foreach (var addId in toAdd)
+                    await ParticipantService.AddParticipantAsync(s.SessionId!, new Core.Participant { UserId = addId, Count = 0, Rating = null });
+                foreach (var removeId in toRemove)
+                    await ParticipantService.RemoveParticipantAsync(s.SessionId!, removeId);
+            }
+            else
+            {
+                var participants = selected.Where(kv => kv.Value).Select(kv => new Core.Participant { UserId = kv.Key, Count = 0, Rating = null }).ToList();
+                if (!participants.Any(p => p.UserId == CurrentUserId)) participants.Add(new() { UserId = CurrentUserId!, Count = 0, Rating = null });
+                
+                var creation = new Core.Session { Title = title.Trim(), RestaurantName = string.IsNullOrWhiteSpace(restaurant) ? null : restaurant!.Trim(), Description = string.IsNullOrWhiteSpace(description) ? null : description!.Trim(), Participants = participants, IsActive = true };
+                await SessionService.AddSessionAsync(CurrentUserId!, creation);
+            }
+            await OnSaved.InvokeAsync();
+        }
+        catch (Exception ex) { error = ex.Message; }
+        finally { isSaving = false; }
+    }
+
+    private void OnImageSelected(InputFileChangeEventArgs e) { selectedImage = e.File; uploadError = null; }
+
+    private async Task UploadImage()
+    {
+        if (!owner || EditingSession?.SessionId is null || selectedImage is null) return;
+        isUploading = true; uploadError = null;
+        try
+        {
+            var content = new MultipartFormDataContent();
+            var stream = selectedImage.OpenReadStream(5 * 1024 * 1024);
+            var streamContent = new StreamContent(stream);
+            streamContent.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue(selectedImage.ContentType);
+            content.Add(streamContent, "file", selectedImage.Name);
+
+            var request = new HttpRequestMessage(HttpMethod.Post, $"api/Sessions/{EditingSession.SessionId}/images") { Content = content };
+            if (!string.IsNullOrWhiteSpace(CurrentUserId)) request.Headers.Add("X-User-Id", CurrentUserId);
+
+            var response = await Http.SendAsync(request);
+            if (response.IsSuccessStatusCode)
+            {
+                var fresh = await SessionService.GetSessionBySessionIdAsync(EditingSession.SessionId!);
+                if (fresh is not null) { EditingSession = fresh; StateHasChanged(); }
+                selectedImage = null;
+            }
+            else { uploadError = $"Upload fejlede: {response.StatusCode}"; }
+        }
+        catch (Exception ex) { uploadError = ex.Message; }
+        finally { isUploading = false; }
+    }
+
+    private async Task DeleteImage(string imageId)
+    {
+        if (!owner || EditingSession?.SessionId is null || string.IsNullOrWhiteSpace(imageId)) return;
+        isUploading = true; uploadError = null;
+        try
+        {
+            var request = new HttpRequestMessage(HttpMethod.Delete, $"api/Sessions/{EditingSession.SessionId}/images/{imageId}");
+            if (!string.IsNullOrWhiteSpace(CurrentUserId)) request.Headers.Add("X-User-Id", CurrentUserId);
+            var resp = await Http.SendAsync(request);
+            if (resp.IsSuccessStatusCode) { var fresh = await SessionService.GetSessionBySessionIdAsync(EditingSession.SessionId!); if (fresh is not null) { EditingSession = fresh; StateHasChanged(); } }
+            else { uploadError = $"Slet fejlede: {resp.StatusCode}"; }
+        }
+        catch (Exception ex) { uploadError = ex.Message; }
+        finally { isUploading = false; }
+    }
+
+    private async Task SetThumbnail(string imageId)
+    {
+        if (!owner || EditingSession?.SessionId is null || string.IsNullOrWhiteSpace(imageId)) return;
+        isUploading = true;
+        try
+        {
+            var request = new HttpRequestMessage(HttpMethod.Put, $"api/Sessions/{EditingSession.SessionId}/images/{imageId}/thumbnail");
+            if (!string.IsNullOrWhiteSpace(CurrentUserId)) request.Headers.Add("X-User-Id", CurrentUserId);
+            var resp = await Http.SendAsync(request);
+            if (resp.IsSuccessStatusCode) { var fresh = await SessionService.GetSessionBySessionIdAsync(EditingSession.SessionId!); if (fresh is not null) { EditingSession = fresh; StateHasChanged(); } }
+            else { uploadError = $"Kunde ikke sætte thumbnail: {resp.StatusCode}"; }
+        }
+        catch (Exception ex) { uploadError = ex.Message; }
+        finally { isUploading = false; }
+    }
+
+    private string GetImageUrl(string? sessionId, string? imageId)
+    {
+        if (string.IsNullOrWhiteSpace(sessionId) || string.IsNullOrWhiteSpace(imageId))
+            return "";
+        return $"{NavManager.BaseUri}api/Sessions/{sessionId}/images/{imageId}";
+    }
+}
+
