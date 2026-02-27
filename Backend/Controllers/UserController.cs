@@ -30,14 +30,12 @@ public class UsersController : ControllerBase
     [HttpGet("login/{email}/{password}")]
     public async Task<ActionResult<User>> Login(string email, string password)
     {
-        // 1) Vi laver den samme hash på det password, som brugeren skriver ved login,
-        //    som vi laver ved oprettelse. Så sammenligner vi "hashet mod hash".
-        //    → Vi skal ALDRIG forsøge at "un-hashe".
-        var hashedInputPassword = PasswordHasherLinearProbing.Hash(password);
-
-        // 2) Nu sammenligner vi den hash, vi lige har regnet, med hash-værdien i databasen.
-        var user = await _repo.FindByEmailAndPasswordHashAsync(email, hashedInputPassword);
+        // 1) Hent brugeren på email og verificér password med Argon2
+        var user = await _repo.FindByEmailAsync(email);
         if (user is null) return NotFound();
+
+        var ok = Backend.Argon2PasswordHasher.Verify(password, user.Password);
+        if (!ok) return NotFound();
 
         return Ok(user);
     }
@@ -58,7 +56,7 @@ public class UsersController : ControllerBase
         // 1) Vi trimmer password → fjerner utilsigtede mellemrum før/efter.
         // 2) Vi laver hash → output er en streng bestående kun af tal,
         //    to cifre pr. tegn i det oprindelige password.
-        var hashedPassword = PasswordHasherLinearProbing.Hash(input.Password.Trim());
+        var hashedPassword = Backend.Argon2PasswordHasher.Hash(input.Password.Trim());
         var now = DateTime.UtcNow;
 
         var newUser = new User
@@ -100,7 +98,7 @@ public class UsersController : ControllerBase
 
         if (!string.IsNullOrWhiteSpace(updated.Password))
         {
-            var hashedPassword = PasswordHasherLinearProbing.Hash(updated.Password.Trim());
+            var hashedPassword = Backend.Argon2PasswordHasher.Hash(updated.Password.Trim());
             updated.Password = hashedPassword;
         }
 

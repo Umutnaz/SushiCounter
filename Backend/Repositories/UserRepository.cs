@@ -1,14 +1,12 @@
-﻿using System.Text.RegularExpressions;
-using Core;
+﻿using Core;
 using MongoDB.Driver;
-using MongoDB.Bson;
 using Backend.Repositories.IRepository;
 
 namespace Backend.Repositories;
 
 // UserRepository: All DB operations for User documents.
 // - Create, read, update, delete users
-// - Login is implemented via FindByEmailAndPasswordHashAsync: controller is responsible for hashing the password input
+// - Login is implemented via FindByEmailAsync: controller is responsible for hashing/verifying the password input
 // - Keep repository focused on DB work; controller handles validation and hashing
 public class UserRepository : IUserRepository
 {
@@ -29,16 +27,10 @@ public class UserRepository : IUserRepository
 
     public async Task<List<User>> GetAllAsync() => await _users.Find(_ => true).ToListAsync();
 
-    public async Task<User?> FindByEmailAndPasswordHashAsync(string email, string passwordHash)
+    public async Task<User?> FindByEmailAsync(string email)
     {
-        // Compare on lowercase since we store emails in lowercase
         var normalizedEmail = (email ?? string.Empty).Trim().ToLowerInvariant();
-        var filter = Builders<User>.Filter.And(
-            Builders<User>.Filter.Eq(u => u.Password, passwordHash),
-            Builders<User>.Filter.Eq(u => u.Email, normalizedEmail)
-        );
-
-        return await _users.Find(filter).FirstOrDefaultAsync();
+        return await _users.Find(u => u.Email == normalizedEmail).FirstOrDefaultAsync();
     }
 
     public async Task<User> CreateAsync(User user)
