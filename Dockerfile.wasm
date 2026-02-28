@@ -1,0 +1,13 @@
+FROM mcr.microsoft.com/dotnet/sdk:9.0 AS build
+WORKDIR /src
+
+COPY Frontend/*.csproj Frontend/
+COPY Core/*.csproj Core/
+RUN dotnet restore Frontend/*.csproj
+
+COPY . .
+RUN dotnet publish Frontend/Frontend.csproj -c Release -o /out
+
+FROM nginx:alpine
+COPY --from=build /out/wwwroot /usr/share/nginx/html
+EXPOSE 80
