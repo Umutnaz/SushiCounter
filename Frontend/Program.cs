@@ -14,7 +14,8 @@ builder.Services.AddBlazoredLocalStorage();
 
 // Set the HttpClient BaseAddress to your BACKEND URL so calls like "api/Users/opret" go to the backend.
 // Replace the URI with the actual backend address and scheme you run (http/https and port).
-builder.Services.AddScoped(sp => new HttpClient { BaseAddress = new Uri("http://localhost:5132/") });
+//builder.Services.AddScoped(sp => new HttpClient { BaseAddress = new Uri("http://localhost:5132/") }); local testing
+builder.Services.AddScoped(sp => new HttpClient { BaseAddress = new Uri("https://sushicounter.onrender.com/") }); //onrender testing
 
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<ISessionService, SessionService>();
