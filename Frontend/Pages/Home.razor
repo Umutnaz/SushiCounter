@@ -8,6 +8,7 @@
 
 <div class="home-container">
     <h1 class="home-title">Velkommen til SushiTracker 🍣</h1>
+    <button class="create-session-btn" @onclick="OpenCreateSession">Opret session</button>
 
     @if (loading)
     {
@@ -200,5 +201,11 @@
             mySessions = sessions.OrderByDescending(s => s.CreatedAt).ToList();
             StateHasChanged();
         }
+    }
+
+    private void OpenCreateSession()
+    {
+        selectedSession = null;
+        modalVisible = true;
     }
 }

@@ -1,4 +1,4 @@
-﻿@using Core
+﻿﻿@using Core
 @inject IUserService UserService
 @inject NavigationManager Nav
 @if (Visible && UserToDelete != null)
@@ -40,7 +40,7 @@
             Nav.NavigateTo("/", true);
             //Kører DeleteUserAsync funktionen fra vores Userservice med parametren UserToDelete.UserId
             //Det er personen man har trykket på som modalet er om
-            await UserService.DeleteUserAsync(UserToDelete.UserId);
+            await UserService.DeleteUserAsync(UserToDelete?.UserId ?? string.Empty);
        
             //callback til OnUserDeleted funktionen fra account overview
             //Som søger for at personen man nu har slettet også bliver slettet fra listen

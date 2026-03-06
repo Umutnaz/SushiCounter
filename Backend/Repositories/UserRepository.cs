@@ -1,4 +1,4 @@
-﻿using Core;
+﻿﻿using Core;
 using MongoDB.Driver;
 using Backend.Repositories.IRepository;
 
@@ -66,5 +66,19 @@ public class UserRepository : IUserRepository
     {
         var res = await _users.DeleteOneAsync(u => u.UserId == userId);
         return res.DeletedCount > 0;
+    }
+
+    public async Task<bool> DeleteUserAsync(User user)
+    {
+        var res = await _users.DeleteOneAsync(u => u.UserId == user.UserId);
+        return res.DeletedCount > 0;
+    }
+
+    public async Task<bool> UpdateLastLoginAsync(string userId)
+    {
+        var filter = Builders<User>.Filter.Eq(u => u.UserId, userId);
+        var update = Builders<User>.Update.Set(u => u.LastLogin, DateTime.UtcNow);
+        var res = await _users.UpdateOneAsync(filter, update);
+        return res.MatchedCount > 0;
     }
 }

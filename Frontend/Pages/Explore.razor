@@ -8,6 +8,7 @@
 
 <div class="explore-container">
     <h1 class="explore-title">Udforsk venners sessioner 🍣</h1>
+    <button class="create-session-btn" @onclick="OpenCreateSession">Opret session</button>
 
     @if (loading)
     {
@@ -151,5 +152,10 @@
             return "";
         return $"/api/Sessions/{sessionId}/images/{imageId}";
     }
-}
 
+    private void OpenCreateSession()
+    {
+        selectedSession = null;
+        modalVisible = true;
+    }
+}

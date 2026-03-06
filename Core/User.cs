@@ -20,6 +20,8 @@ public class User
     public List<FriendRequest> IncomingRequests { get; set; } = new(); //kræver at det er her for at det kan embeddes i mongodb
     public List<FriendRequest> OutgoingRequests { get; set; } = new();
     
+    public DateTime LastLogin { get; set; } //Hvornår brugeren sidst loggede ind. Mhp at kunne slette brugeren efter 6mnd inaktivitet
+    
 }
 
 //Navn, email og password skal udfyldes ved oprettelse

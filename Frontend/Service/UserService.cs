@@ -1,4 +1,4 @@
-﻿using Blazored.LocalStorage;
+﻿﻿using Blazored.LocalStorage;
 using Core;
 using System.Net.Http;
 using System.Net.Http.Json;
@@ -81,7 +81,7 @@ namespace Frontend.Services
             }
 
             // Hent frisk kopi fra backend (så vi får evt. normaliseret email/UpdatedAt m.m.)
-            var fresh = await GetUserByUserId(user.UserId);
+            var fresh = await GetUserByUserId(user.UserId ?? string.Empty);
             await _localStorage.SetItemAsync("user", fresh ?? user);
         }
         // henter en specifik bruger baseret på id

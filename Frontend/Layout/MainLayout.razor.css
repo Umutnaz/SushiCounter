@@ -88,6 +88,28 @@
     transform: translate(2px ,2px);
 }
 
+/* Create session button */
+.create-session-btn {
+    background-color: #3179fb;
+    color: white;
+    border: none;
+    padding: 0.75rem 1.5rem;
+    border-radius: 0.5rem;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+    margin-bottom: 1rem;
+}
+
+.create-session-btn:hover {
+    background-color: #2563eb;
+}
+
+.create-session-btn:active {
+    transform: translateY(1px);
+}
+
 /* ===== MOBILE RESPONSIVE ===== */
 
 @media (max-width: 768px) {

@@ -1,4 +1,4 @@
-﻿using Backend.Repositories.IRepository;
+﻿﻿using Backend.Repositories.IRepository;
 using Core;
 using Microsoft.AspNetCore.Mvc;
 
@@ -37,6 +37,9 @@ public class UsersController : ControllerBase
         var ok = Backend.Argon2PasswordHasher.Verify(password, user.Password);
         if (!ok) return NotFound();
 
+        // Update LastLogin
+        await _repo.UpdateLastLoginAsync(user.UserId!);
+
         return Ok(user);
     }
 
@@ -67,6 +70,7 @@ public class UsersController : ControllerBase
             Password = hashedPassword,                     // GEM ALTID HASH, ALDRIG klartekst
             CreatedAt = now,
             UpdatedAt = now,
+            LastLogin = now,
             Sessions = new List<Session>()
         };
 
@@ -122,8 +126,24 @@ public class UsersController : ControllerBase
     public async Task<IActionResult> Delete(string userId)
     {
         if (string.IsNullOrWhiteSpace(userId)) return BadRequest("userId mangler.");
-        var ok = await _repo.DeleteAsync(userId);
+        var user = await _repo.GetByIdAsync(userId);
+        if (user == null) return NotFound();
+        var ok = await _repo.DeleteUserAsync(user);
         if (!ok) return NotFound();
         return NoContent();
+    }
+
+    // DELETE: api/Users/inactive
+    [HttpDelete("inactive")]
+    public async Task<IActionResult> DeleteInactive()
+    {
+        var allUsers = await _repo.GetAllAsync();
+        var cutoff = DateTime.UtcNow.AddMonths(-12);
+        var inactiveUsers = allUsers.Where(u => u.LastLogin < cutoff).ToList();
+        foreach (var user in inactiveUsers)
+        {
+            await _repo.DeleteUserAsync(user);
+        }
+        return Ok(new { DeletedUsers = inactiveUsers.Count });
     }
 }
