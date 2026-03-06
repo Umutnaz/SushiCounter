@@ -1,4 +1,4 @@
-﻿﻿.home-container {
+﻿.home-container {
     max-width: 900px;
     margin: 2rem auto;
     padding: 1.5rem;
@@ -168,6 +168,33 @@
     padding: 0.2rem 0.6rem;
     border-radius: 0.25rem;
     font-weight: 500;
+}
+
+/* Create Session Button */
+.create-session-btn {
+    background-color: #007bff;
+    color: white;
+    border: none;
+    padding: 0.75rem 1.5rem;
+    border-radius: 0.375rem;
+    font-size: 1rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+    margin: 0 auto 2rem auto;
+    display: block;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    text-transform: none;
+    letter-spacing: normal;
+}
+
+.create-session-btn:hover {
+    background-color: #0056b3;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+.create-session-btn:active {
+    background-color: #004085;
 }
 
 /* ===== MOBILE RESPONSIVE ===== */
