@@ -68,11 +68,6 @@ public class UserRepository : IUserRepository
         return res.DeletedCount > 0;
     }
 
-    public async Task<bool> DeleteUserAsync(User user)
-    {
-        var res = await _users.DeleteOneAsync(u => u.UserId == user.UserId);
-        return res.DeletedCount > 0;
-    }
 
     public async Task<bool> UpdateLastLoginAsync(string userId)
     {

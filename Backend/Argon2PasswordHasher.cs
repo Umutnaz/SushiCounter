@@ -6,11 +6,11 @@ namespace Backend;
 
 public static class Argon2PasswordHasher
 {
-    // Starter-værdier (ok til de fleste projekter)
+    // Starter-værdier (optimeret for balance mellem sikkerhed og performance)
     private const int SaltSize = 16;          // 128-bit
     private const int HashSize = 32;          // 256-bit
-    private const int Iterations = 3;         // t
-    private const int MemoryKb = 64 * 1024;   // m = 64 MB
+    private const int Iterations = 2;         // t (reduceret fra 3)
+    private const int MemoryKb = 32 * 1024;   // m = 32 MB (reduceret fra 64 MB)
     private const int Parallelism = 1;        // p
 
     // Returnerer en string du kan gemme i MongoDB

@@ -11,9 +11,9 @@ var builder = WebApplication.CreateBuilder(args);
 Env.Load();
 
 // Seed static data on startup (unless explicitly disabled via env var SEED_STATIC_DATA=false)
-// Default: true (so you can just `dotnet run` and get test data immediately)
+// Default: false (byg applikationen hurtigere - sæt SEED_STATIC_DATA=true hvis du vil have testdata)
 var seedStaticDataEnv = Environment.GetEnvironmentVariable("SEED_STATIC_DATA");
-var seedStaticData = seedStaticDataEnv is null || seedStaticDataEnv.Trim().ToLowerInvariant() != "false";
+var seedStaticData = seedStaticDataEnv is not null && seedStaticDataEnv.Trim().ToLowerInvariant() == "true";
 
 // Configure services
 builder.Services.AddControllers();

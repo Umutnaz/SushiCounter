@@ -126,9 +126,7 @@ public class UsersController : ControllerBase
     public async Task<IActionResult> Delete(string userId)
     {
         if (string.IsNullOrWhiteSpace(userId)) return BadRequest("userId mangler.");
-        var user = await _repo.GetByIdAsync(userId);
-        if (user == null) return NotFound();
-        var ok = await _repo.DeleteUserAsync(user);
+        var ok = await _repo.DeleteAsync(userId);
         if (!ok) return NotFound();
         return NoContent();
     }
@@ -142,7 +140,7 @@ public class UsersController : ControllerBase
         var inactiveUsers = allUsers.Where(u => u.LastLogin < cutoff).ToList();
         foreach (var user in inactiveUsers)
         {
-            await _repo.DeleteUserAsync(user);
+            await _repo.DeleteAsync(user.UserId!);
         }
         return Ok(new { DeletedUsers = inactiveUsers.Count });
     }

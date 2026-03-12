@@ -6,6 +6,7 @@ public interface IUserService
     Task<User?> AddUserAsync(User user);  // Opret en ny bruger, hvis den ikke findes
     Task Logout();  // Log ud
     Task<User?> GetUserLoggedInAsync();  // Hent den bruger, der er logget ind lige nu
+    Task SetUserLoggedIn(User user);  // Gem bruger til localStorage uden API-kald
     Task UpdateUser(User user);
     Task DeleteUserAsync(string UserId);
 

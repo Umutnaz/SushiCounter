@@ -48,7 +48,7 @@
     <input
       id="password-input"
       class="input"
-      type="text"
+      type="password"
       @bind="password" />
 
     @if (!string.IsNullOrWhiteSpace(message))
@@ -158,87 +158,63 @@
   }
 
     private async Task HandleSubmit()
-  {
-    message = null;
-
-    // Fælles validering for email/password
-    if (string.IsNullOrWhiteSpace(email) || string.IsNullOrWhiteSpace(password))
     {
-      message = New ? "Udfyld venligst alle felter." : "Angiv email og password.";
-      return;
-    }
+        message = null;
 
-    // Fælles max-længde på password (matcher model-attributten)
-    if (password!.Length > 100)
-    {
-      message = "Password må maks være 100 tegn langt.";
-      return;
-    }
-
-    // Kun ved oprettelse: navn er også required
-    if (New && string.IsNullOrWhiteSpace(name))
-    {
-      message = "Udfyld venligst alle felter.";
-      return;
-    }
-
-    if (New)
-    {
-      try
-      {
-        var created = await UserService.AddUserAsync(new User
+        // Minimal validering: kun påkrævet felter
+        if (string.IsNullOrWhiteSpace(email) || string.IsNullOrWhiteSpace(password))
         {
-          Name = name!,
-          Email = email!,
-          Password = password!
-        });
-
-        if (created is null)
-        {
-          message = "Kunne ikke oprette bruger (findes måske allerede).";
-          return;
+            message = "Email og password er påkrævet.";
+            return;
         }
 
-        var logged = await UserService.Login(email!, password!);
+        if (New && string.IsNullOrWhiteSpace(name))
+        {
+            message = "Brugernavn er påkrævet.";
+            return;
+        }
 
-        if (logged is not null)
-          nav.NavigateTo("/Home", forceLoad: true);
-        else
-          message = "Bruger oprettet, men automatisk login fejlede.";
-      }
-      catch (HttpRequestException ex)
-      {
-        if (ex.Message.Contains("Brugernavn findes allerede", StringComparison.OrdinalIgnoreCase))
-          message = "Brugernavnet er allerede valgt.";
-        else if (ex.Message.Contains("Email findes allerede", StringComparison.OrdinalIgnoreCase))
-          message = "Denne email er allerede registreret.";
-        else if (ex.Message.Contains("Password må maks være 100 tegn langt", StringComparison.OrdinalIgnoreCase))
-          message = "Password må maks være 100 tegn langt.";
-        else
-          message = "Kunne ikke oprette bruger. Prøv igen.";
-      }
-      catch
-      {
-        message = "Der opstod en fejl under oprettelsen.";
-      }
-    }
-    else
-    {
-      try
-      {
-        var user = await UserService.Login(email!, password!);
+        try
+        {
+            if (New)
+            {
+                // Opret bruger
+                var created = await UserService.AddUserAsync(new User
+                {
+                    Name = name!,
+                    Email = email!,
+                    Password = password!
+                });
 
-        if (user is not null)
-          nav.NavigateTo("/Home", forceLoad: true);
-        else
-          message = "Forkert email eller password.";
-      }
-      catch (Exception ex)
-      {
-        message = $"Login-fejl: {ex.Message}";
-      }
+                if (created is null)
+                {
+                    message = "Bruger findes måske allerede.";
+                    return;
+                }
+
+                // Backend returnerer bruger direkte - gem den og gå til Home uden ekstra Login-kald
+                await UserService.SetUserLoggedIn(created);
+                nav.NavigateTo("/Home", forceLoad: true);
+            }
+            else
+            {
+                // Login eksisterende bruger
+                var user = await UserService.Login(email!, password!);
+                if (user is not null)
+                    nav.NavigateTo("/Home", forceLoad: true);
+                else
+                    message = "Forkert email eller password.";
+            }
+        }
+        catch (HttpRequestException ex)
+        {
+            message = ex.Message.Contains("Email") ? "Email bruges allerede." : "En fejl opstod.";
+        }
+        catch
+        {
+            message = "En fejl opstod. Prøv igen.";
+        }
     }
-  }
 
 
 }

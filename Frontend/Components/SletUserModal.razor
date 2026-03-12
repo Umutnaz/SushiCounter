@@ -9,7 +9,7 @@
 
             <h3>Bekræft sletning</h3>
             <p>
-                <strong>@UserToDelete.Name</strong>Er du sikker på, at du vil slette din profil?
+                <strong>@UserToDelete.Name</strong> Er du sikker på, at du vil slette din profil?
             </p>
 
             <div class="modal-buttons">
@@ -35,17 +35,26 @@
 //det gør visible til false som er det der lukker siden
     private Task Close() => OnCloseRequested.InvokeAsync();
     //laver callback til samme funktion "OnCloseRequested" til hvis man trykker på diven
-    private async void Slet()
+    private async Task Slet()
     {
-            Nav.NavigateTo("/", true);
+        try
+        {
             //Kører DeleteUserAsync funktionen fra vores Userservice med parametren UserToDelete.UserId
             //Det er personen man har trykket på som modalet er om
             await UserService.DeleteUserAsync(UserToDelete?.UserId ?? string.Empty);
-       
+            
             //callback til OnUserDeleted funktionen fra account overview
             //Som søger for at personen man nu har slettet også bliver slettet fra listen
             await OnCloseRequested.InvokeAsync();
+            
+            // Force reload siden efter succesfuld sletning, så brugeren kommer til login page
+            Nav.NavigateTo("/", true);
         }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Fejl ved sletning: {ex.Message}");
+        }
+    }
     }
 
 }
