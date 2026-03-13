@@ -47,3 +47,8 @@
 #sushi9 .filling{background:repeating-linear-gradient(20deg,rgba(255,255,255,.33),rgba(255,255,255,.33) 6px,transparent 6px,transparent 16px),linear-gradient(180deg,#ff7b62,#ff986e)}
 #sushi13 .filling{background:linear-gradient(180deg,#8d4e2a,#ad5e2f 40%,#c46b33)}
 #sushi18 .filling{left:8%;right:8%;top:16%;bottom:32%;border-radius:24px;background:linear-gradient(180deg,#dd9a4a,#c9822f)}
+
+.spam {
+    touch-action: manipulation;
+} 
+/*HER GØR VI SÅ DEN IKKE FORSTÅR FLERE TRYK SOM ZOOM */

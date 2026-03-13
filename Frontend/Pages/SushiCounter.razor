@@ -10,7 +10,7 @@
 
     <p class="status" role="status">Current count: <span class="count">@currentCount</span></p>
     <div class="sushi-display">
-        <div id="@($"sushi{sushiIndex}")" class="sushi" @onclick="IncrementCount" title="Klik for +1">
+        <div id="@($"sushi{sushiIndex}")" class="sushi spam" @onclick="IncrementCount" title="Klik for +1">
             <div class="nori"></div>
             <div class="rice"></div>
             <div class="filling"></div>
@@ -20,7 +20,7 @@
     </div>
 
     <div class="btn-row">
-        <button class="btn btn-secondary"@onclick="ResetCount" >Nulstil count</button>
+        <button class="btn btn-secondary spam"@onclick="ResetCount" >Nulstil count</button>
         <button class="btn btn-primary" @onclick="IncrementCount">Click me</button>
         <button class="btn btn-secondary" @onclick="AddToSession">Tilføj til en session</button>
     </div>
