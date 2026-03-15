@@ -6,6 +6,13 @@
 <PageTitle>Login</PageTitle>
 <div class="midten">
 <div class="card">
+  @if (isLoading)
+  {
+    <div class="loader-overlay">
+      <span class="loader"></span>
+    </div>
+  }
+
   <input
     value=""
     class="blind-check"
@@ -56,9 +63,9 @@
       <div class="msg">@message</div>
     }
 
-    <button class="submit" type="submit">@((New ? "Opret konto og log ind" : "Log ind"))</button>
+    <button class="submit" type="submit" disabled="@isLoading">@((New ? "Opret konto og log ind" : "Log ind"))</button>
 
-    <button type="button" class="submit" @onclick="ToggleNew">
+    <button type="button" class="submit" @onclick="ToggleNew" disabled="@isLoading">
       @(New ? "Har du allerede en konto? Log ind" : "Ny bruger? Opret konto")
     </button>
   </form>
@@ -144,6 +151,7 @@
 @code {
  // UI state
   bool New = false;
+  bool isLoading = false;
   string? message;
 
   // Bindings
@@ -160,17 +168,20 @@
     private async Task HandleSubmit()
     {
         message = null;
+        isLoading = true;
 
         // Minimal validering: kun påkrævet felter
         if (string.IsNullOrWhiteSpace(email) || string.IsNullOrWhiteSpace(password))
         {
             message = "Email og password er påkrævet.";
+            isLoading = false;
             return;
         }
 
         if (New && string.IsNullOrWhiteSpace(name))
         {
             message = "Brugernavn er påkrævet.";
+            isLoading = false;
             return;
         }
 
@@ -189,6 +200,7 @@
                 if (created is null)
                 {
                     message = "Bruger findes måske allerede.";
+                    isLoading = false;
                     return;
                 }
 
@@ -203,16 +215,21 @@
                 if (user is not null)
                     nav.NavigateTo("/Home", forceLoad: true);
                 else
+                {
                     message = "Forkert email eller password.";
+                    isLoading = false;
+                }
             }
         }
         catch (HttpRequestException ex)
         {
             message = ex.Message.Contains("Email") ? "Email bruges allerede." : "En fejl opstod.";
+            isLoading = false;
         }
         catch
         {
             message = "En fejl opstod. Prøv igen.";
+            isLoading = false;
         }
     }
 
